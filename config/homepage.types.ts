@@ -4,12 +4,17 @@ export type SiteInfoTags = {
   school: string
 }
 
+export type SiteProfileStatus = {
+  emoji: string
+  message: string
+}
+
 export type SiteProfileConfig = {
   name: string
   age: string
   zodiac: string
   avatarUrl: string
-  emjoi: string
+  status: SiteProfileStatus
   infoTags: SiteInfoTags
   professions: string[]
 }

@@ -5,7 +5,7 @@ export const config = {
   age: "00",
   zodiac: "天秤座",
   avatarUrl: "/og-image.jpg",
-  emjoi: "",
+  status: { emoji: "💻", message: "Building something cool" },
   infoTags: { sex: "男", province: "湖北", school: "计算机科学" },
   professions: ["全栈探索者", "AI极客", "开源狂热者"]
 } satisfies SiteProfileConfig

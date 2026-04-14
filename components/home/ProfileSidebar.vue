@@ -3,9 +3,8 @@
     <div class="vcard-header-mobile">
       <div class="vcard-avatar-wrap">
         <img :src="config.avatarUrl" alt="Avatar" class="vcard-avatar" />
-        <div class="user-status-badge">
-          <span class="status-emoji">🎯</span>
-          <span class="status-message">Focusing</span>
+        <div class="user-status-badge" :title="config.status.message">
+          <span class="status-emoji">{{ config.status.emoji }}</span>
         </div>
       </div>
   
