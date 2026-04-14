@@ -179,12 +179,13 @@ function formatCount(value: number) {
 }
 
 .repo-link {
-  color: var(--gh-accent);
+  color: var(--gh-fg);
   text-decoration: none;
+  transition: color 0.15s;
 }
 
 .repo-link:hover {
-  text-decoration: underline;
+  color: var(--gh-accent);
 }
 
 .repo-link-fallback {

@@ -31,8 +31,17 @@ const emit = defineEmits<{
 
 <style scoped>
 .nav-button {
-  background: none;
-  border: 0;
+  background: transparent;
+  border: none;
   font: inherit;
+  border-bottom: 2px solid transparent;
+  /* Offset down to overlap the gh-nav 1px border like GitHub natively does */
+  margin-bottom: -1px;
+}
+.nav-button.active {
+  border-bottom-color: #fd8c73;
+}
+.nav-button:hover:not(.active) {
+  border-bottom-color: var(--gh-border-muted);
 }
 </style>
