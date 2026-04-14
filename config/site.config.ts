@@ -1,3 +1,5 @@
+import type { AnimeListItem, LinkButton, SiteProfileConfig, TechStackItem, TodoItem } from './homepage.types'
+
 export const config = {
   name: "Perimsx",
   age: "00",
@@ -6,15 +8,18 @@ export const config = {
   emjoi: "",
   infoTags: { sex: "男", province: "湖北", school: "计算机科学" },
   professions: ["全栈探索者", "AI极客", "开源狂热者"]
-};
+} satisfies SiteProfileConfig
 
 export const todoList = [
-  { text: "构建完美的个人主页", checked: true },
-  { text: "探索 AI 与 Web3 生态", checked: false },
-  { text: "掌握深度学习内核", checked: false }
-];
+  { text: "构建完美的个人主页", checked: true, start: "2026-04-10", due: "2026-04-15", actual: "2026-04-14" },
+  { text: "探索 AI 与 Web3 生态", checked: false, start: "2026-04-12", due: "2026-06-30" },
+  { text: "掌握深度学习内核", checked: false, start: "2026-05-01", due: "2026-12-31" }
+] satisfies TodoItem[]
 
 export const techStack = [
+  { name: "TypeScript", icon: "devicon:typescript" },
+  { name: "JavaScript", icon: "devicon:javascript" },
+  { name: "Go", icon: "devicon:go-wordmark" },
   { name: "C / C++", icon: "devicon:c" },
   { name: "Python", icon: "devicon:python" },
   { name: "Linux", icon: "devicon:linux" },
@@ -28,7 +33,7 @@ export const techStack = [
   { name: "Claude", icon: "logos:anthropic-icon" },
   { name: "Gemini", icon: "logos:google-bard-icon" },
   { name: "Antigravity", icon: "noto:rocket" }
-];
+] satisfies TechStackItem[]
 
 export const linkBtns = [
   { text: "GitHub", icon: "mdi:github", color: "#24292e", url: "https://github.com/Perimsx" },
@@ -36,14 +41,14 @@ export const linkBtns = [
   { text: "语雀", icon: "ant-design:read-filled", color: "#25b864", url: "https://www.yuque.com/coet/" },
   { text: "抖音", icon: "simple-icons:tiktok", color: "#1c1c1e", url: "https://v.douyin.com/HWMgjLaTtFk" },
   { text: "哔哩哔哩", icon: "ri:bilibili-fill", color: "#fb7299", url: "https://space.bilibili.com/9655855" }
-];
+] satisfies LinkButton[]
 
 export const typewriterTexts = [
   "Hello World!",
   "代码改变世界",
   "A pixel is worth a thousand words",
   "Stay hungry, stay foolish."
-];
+]
 
 // bangumiId: 精确匹配 Bangumi 条目 ID，避免搜索歧义
 export const animeList = [
@@ -62,4 +67,4 @@ export const animeList = [
   { name: "遮天", bangumiId: 345768, total: 157, current: 157, status: "更新中" },
   { name: "吞噬星空", bangumiId: 244239, total: 219, current: 219, status: "更新中" },
   { name: "仙逆", bangumiId: 345802, total: 136, current: 136, status: "更新中" }
-];
+] satisfies AnimeListItem[]
