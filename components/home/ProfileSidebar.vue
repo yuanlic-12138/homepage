@@ -87,7 +87,9 @@ import { config, linkBtns } from '~/config/site.config'
   .social-list {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 12px 16px;
+    gap: 10px;
   }
+  .social-link span { display: none; }
+  .social-icon { font-size: 20px; }
 }
 </style>
