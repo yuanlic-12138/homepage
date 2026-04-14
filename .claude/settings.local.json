@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__MiniMax__web_search",
+      "mcp__web-search-prime__web_search_prime",
+      "WebFetch(domain:jikan.moe)",
+      "mcp__zread__get_repo_structure",
+      "mcp__zread__search_doc",
+      "Bash(curl -s -H 'Authorization: Bearer sk-cp-FlhE9hUH31hXGkANSN0Zw_HdFjXznObfNUJ97o_vP5fPbKuDmr4Ctiq9CWvUTqxxJxTv8vrSWz46jJ6_g_-Afarc4VQpsxZ2cHXGOkM_IE0xZ3D62aavtSw' -H 'Content-Type: application/json' https://api.openai.com/v1/models)",
+      "Bash(curl -s -H 'Authorization: Bearer sk-cp-FlhE9hUH31hXGkANSN0Zw_HdFjXznObfNUJ97o_vP5fPbKuDmr4Ctiq9CWvUTqxxJxTv8vrSWz46jJ6_g_-Afarc4VQpsxZ2cHXGOkM_IE0xZ3D62aavtSw' -H 'Content-Type: application/json' https://api.minimax.chat/v1/models)",
+      "mcp__web-reader__webReader",
+      "WebSearch",
+      "WebFetch(domain:docs.agentworld.com)",
+      "Bash(claude mcp:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "minimax"
+  ]
+}

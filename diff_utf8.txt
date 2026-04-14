@@ -1,0 +1,1940 @@
+diff --git a/app/app.config.ts b/app/app.config.ts
+index 56e6188..7434eec 100644
+--- a/app/app.config.ts
++++ b/app/app.config.ts
+@@ -141,6 +141,10 @@ export default defineAppConfig({
+     TYPE: 'local',
+   },
+ 
++  hotGetConfig: {
++    Api: 'https://hot-api.liiiu.cn',
++    timeout: 200,
++  },
+ 	/** 左侧栏导航 */
+ 	nav: [
+ 		{
+diff --git a/app/components/yjluo/hot/body/hotCard.vue b/app/components/yjluo/hot/body/hotCard.vue
+new file mode 100644
+index 0000000..d9c30b1
+--- /dev/null
++++ b/app/components/yjluo/hot/body/hotCard.vue
+@@ -0,0 +1,119 @@
++<script setup lang="ts">
++import type { HotItem } from '~/types/hot'
++
++const props = defineProps<{
++  item: HotItem
++  rank: number
++}>()
++
++const link = computed(() => props.item.url || props.item.mobileUrl || '#')
++
++const rankId = computed(() => `rank-top${props.rank}`)
++</script>
++
++<template>
++  <div class="hotItem">
++    <a
++      class="hotItemLink"
++      :href="link"
++      target="_blank"
++      rel="noopener noreferrer"
++    >
++      <div class="rank" :id="rankId">
++        {{ rank }}
++      </div>
++
++      <div class="content">
++        <div class="title">{{ item.title }}</div>
++        <div class="desc">{{ item.desc || '暂无描述' }}</div>
++
++        <div class="meta">
++          <span v-if="item.author">作者：{{ item.author }}</span>
++          <span v-if="item.hot">热度：{{ item.hot }}</span>
++        </div>
++      </div>
++    </a>
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$text-primary: #222;
++$text-secondary: #666;
++$text-tertiary: #999;
++$border-lightest: #f2f2f2;
++$border-lighter: #f5f5f5;
++$spacing-xs: 4px;
++$spacing-md: 12px;
++$radius-md: 6px;
++
++.hotItem {
++  border-bottom: 1px solid $border-lightest;
++  padding-bottom: $spacing-md;
++
++  &:last-child {
++    border-bottom: none;
++  }
++
++  .hotItemLink {
++    display: flex;
++    gap: $spacing-md;
++    text-decoration: none;
++    color: inherit;
++
++    .rank {
++      width: 24px;
++      height: 24px;
++      min-width: 24px;
++      font-size: 12px;
++      display: flex;
++      align-items: center;
++      justify-content: center;
++      background-color: $border-lighter;
++      border-radius: $radius-md;
++      transition: all 0.3s;
++    }
++
++    #rank-top1 {
++      background-color: #ea444d;
++    }
++
++    #rank-top2 {
++      background-color: #ed702d;
++    }
++
++    #rank-top3 {
++      background-color: #eead3f;
++    }
++
++    #rank-top1,
++    #rank-top2,
++    #rank-top3 {
++      color: #fff;
++    }
++
++    .content {
++      flex: 1;
++
++      .title {
++        font-size: 15px;
++        font-weight: 600;
++        color: $text-primary;
++        margin-bottom: $spacing-xs;
++      }
++
++      .desc {
++        font-size: 13px;
++        color: $text-secondary;
++        margin-bottom: $spacing-xs;
++      }
++
++      .meta {
++        display: flex;
++        gap: $spacing-md;
++        font-size: 12px;
++        color: $text-tertiary;
++      }
++    }
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/app/components/yjluo/hot/body/hotCardList.vue b/app/components/yjluo/hot/body/hotCardList.vue
+new file mode 100644
+index 0000000..a8cbe89
+--- /dev/null
++++ b/app/components/yjluo/hot/body/hotCardList.vue
+@@ -0,0 +1,31 @@
++<script setup lang="ts">
++import type { HotItem } from '~/types/hot'
++import hotCard from './hotCard.vue';
++
++defineProps<{
++  items: HotItem[]
++  currentPage: number
++  itemsPerPage: number
++}>()
++</script>
++
++<template>
++  <div class="hotList">
++    <hotCard
++      v-for="(item, index) in items"
++      :key="item.id || index"
++      :item="item"
++      :rank="(currentPage - 1) * itemsPerPage + index + 1"
++    />
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$spacing-md: 12px;
++
++.hotList {
++  display: flex;
++  flex-direction: column;
++  gap: $spacing-md;
++}
++</style>
+\ No newline at end of file
+diff --git a/app/components/yjluo/hot/body/hotPageLoading.vue b/app/components/yjluo/hot/body/hotPageLoading.vue
+new file mode 100644
+index 0000000..dc83648
+--- /dev/null
++++ b/app/components/yjluo/hot/body/hotPageLoading.vue
+@@ -0,0 +1,65 @@
++<script setup lang="ts">
++const props = defineProps<{
++  pending: boolean
++  error: unknown
++  isEmpty: boolean
++  message: string
++}>()
++
++const emit = defineEmits<{
++  (e: 'retry'): void
++}>()
++</script>
++
++<template>
++  <div
++    class="status"
++    :class="{
++      loading: pending,
++      error: !!error,
++      empty: isEmpty
++    }"
++  >
++    {{ message }}
++    <button
++      v-if="error"
++      class="retryBtn"
++      @click="emit('retry')"
++    >
++      重试
++    </button>
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$primary-color: #409eff;
++$text-secondary: #666;
++$bg-white: #fff;
++$spacing-sm: 8px;
++$spacing-md: 12px;
++$spacing-xl: 20px;
++$radius-md: 6px;
++
++.status {
++  text-align: center;
++  color: $text-secondary;
++  padding: $spacing-xl 0;
++
++  &.error {
++    color: #e74c3c;
++  }
++
++  .retryBtn {
++    display: inline-block;
++    margin-top: $spacing-sm;
++    margin-left: $spacing-md;
++    padding: 4px $spacing-md;
++    border: none;
++    border-radius: $radius-md;
++    background: $primary-color;
++    color: $bg-white;
++    cursor: pointer;
++    transition: background 0.2s;
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/app/components/yjluo/hot/body/hotPagePagination.vue b/app/components/yjluo/hot/body/hotPagePagination.vue
+new file mode 100644
+index 0000000..5468820
+--- /dev/null
++++ b/app/components/yjluo/hot/body/hotPagePagination.vue
+@@ -0,0 +1,112 @@
++<script setup lang="ts">
++defineProps<{
++  currentPage: number
++  totalPages: number
++}>()
++
++const emit = defineEmits<{
++  (e: 'go', page: number): void
++  (e: 'prev'): void
++  (e: 'next'): void
++}>()
++</script>
++
++<template>
++  <div class="pagination">
++    <button
++      class="pageBtn"
++      :disabled="currentPage === 1"
++      @click="emit('prev')"
++    >
++      上一页
++    </button>
++
++    <div class="pageNumbers">
++      <button
++        v-for="page in totalPages"
++        :key="page"
++        class="pageNumber"
++        :class="{ active: page === currentPage }"
++        @click="emit('go', page)"
++      >
++        {{ page }}
++      </button>
++    </div>
++
++    <button
++      class="pageBtn"
++      :disabled="currentPage === totalPages"
++      @click="emit('next')"
++    >
++      下一页
++    </button>
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$primary-color: #409eff;
++$border-light: #eee;
++$border-lighter: #f5f5f5;
++$bg-white: #fff;
++$spacing-xs: 4px;
++$spacing-sm: 8px;
++$spacing-md: 12px;
++$spacing-lg: 16px;
++$radius-sm: 4px;
++
++.pagination {
++  display: flex;
++  justify-content: center;
++  align-items: center;
++  gap: $spacing-sm;
++  margin-top: $spacing-lg;
++  padding-top: $spacing-lg;
++  border-top: 1px solid $border-lighter;
++
++  .pageBtn {
++    padding: $spacing-xs $spacing-md;
++    border: 1px solid $border-light;
++    border-radius: $radius-sm;
++    background: $bg-white;
++    cursor: pointer;
++    transition: all 0.2s;
++
++    &:disabled {
++      opacity: 0.5;
++      cursor: not-allowed;
++    }
++
++    &:not(:disabled):hover {
++      background: $border-lighter;
++    }
++  }
++
++  .pageNumbers {
++    display: flex;
++    gap: $spacing-xs;
++
++    .pageNumber {
++      width: 32px;
++      height: 32px;
++      display: flex;
++      align-items: center;
++      justify-content: center;
++      border: 1px solid $border-light;
++      border-radius: $radius-sm;
++      background: $bg-white;
++      cursor: pointer;
++      transition: all 0.2s;
++
++      &:hover {
++        background: $border-lighter;
++      }
++
++      &.active {
++        background: $primary-color;
++        color: $bg-white;
++        border-color: $primary-color;
++      }
++    }
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/app/components/yjluo/hot/header/hotPageHeader.vue b/app/components/yjluo/hot/header/hotPageHeader.vue
+new file mode 100644
+index 0000000..b74b22d
+--- /dev/null
++++ b/app/components/yjluo/hot/header/hotPageHeader.vue
+@@ -0,0 +1,89 @@
++<script setup lang="ts">
++const props = defineProps<{
++  miniNameType: 'bilibili' | 'weibo' | 'douyin' | 'zhihu' | '36kr' | 'baidu'
++  nameType: '哔哩哔哩' | '微博' | '抖音' | '知乎' | '36氪' | '百度'
++  categroryType: '热搜'
++  hotTotal: number
++  updateTime: string
++}>()
++
++const relativeUpdateText = computed(() => {
++  if (!props.updateTime) return '暂无更新时间'
++
++  const now = new Date()
++  const updated = new Date(props.updateTime)
++
++  const hours = now.getHours() - updated.getUTCHours()
++
++  return `${hours}小时前更新`
++})
++</script>
++
++<template>
++  <div class="cardMainHeader">
++    <div class="mainHeaderIcon">
++      <NuxtImg
++        :src="`/image/PageImageAssets/hot/${miniNameType}.avif`"
++        :alt="nameType"
++        width="32"
++        height="32"
++      />
++    </div>
++
++    <div class="mainHeaderName">
++      <span>{{ nameType }}</span>
++      <small class="category">{{ categroryType }}</small>
++    </div>
++
++    <div class="mainHeaderData">
++      <div class="headerData">
++        共 {{ hotTotal }} 条 · {{ relativeUpdateText }}
++      </div>
++    </div>
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$text-tertiary: #999;
++$text-secondary: #666;
++$border-lighter: #f5f5f5;
++$spacing-xs: 4px;
++$spacing-md: 12px;
++$spacing-lg: 16px;
++
++.cardMainHeader {
++  display: flex;
++  align-items: center;
++  gap: $spacing-md;
++  margin-bottom: $spacing-lg;
++  padding-bottom: $spacing-md;
++  border-bottom: 1px solid $border-lighter;
++
++  .mainHeaderName {
++    flex: 1;
++    display: flex;
++    flex-direction: column;
++
++    .category {
++      color: $text-tertiary;
++      font-size: 12px;
++    }
++  }
++
++  .mainHeaderData {
++    display: flex;
++    align-items: flex-end;
++    font-size: 12px;
++
++    .headerData {
++      font-weight: bold;
++      position: relative;
++    }
++
++    .headerHour {
++      color: $text-secondary;
++      margin-top: $spacing-xs;
++    }
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/app/components/yjluo/hot/hotPageMain.vue b/app/components/yjluo/hot/hotPageMain.vue
+new file mode 100644
+index 0000000..2167456
+--- /dev/null
++++ b/app/components/yjluo/hot/hotPageMain.vue
+@@ -0,0 +1,154 @@
++<script setup lang="ts">
++import type { ApiResponse } from '~/types/hot'
++import HotPageHeader from './header/hotPageHeader.vue';
++import HotPageLoading from './body/hotPageLoading.vue';
++import HotCardList from './body/hotCardList.vue';
++import HotPagePagination from './body/hotPagePagination.vue';
++
++const appConfig = useAppConfig()
++
++const props = defineProps<{
++  Cache: 'true' | 'false'
++  NameType: '哔哩哔哩' | '微博' | '抖音' | '知乎' | '36氪' | '百度'
++  MiniNameType: 'bilibili' | 'weibo' | 'douyin' | 'zhihu' | '36kr' | 'baidu'
++  CategroryType: '热搜'
++}>()
++
++// SSG安全的请求头
++const requestHeaders = {}
++
++const requestUrl = computed(() =>
++  `${appConfig.hotGetConfig.Api}/${props.MiniNameType}`
++)
++
++const {
++  data: responseData,
++  pending,
++  error,
++  refresh,
++} = useFetch<ApiResponse>(requestUrl, {
++  query: { cache: props.Cache },
++  headers: requestHeaders,
++  key: `hot-${props.MiniNameType}-${props.Cache}`,
++  default: () => ({ total: 0, updateTime: '', data: [] }),
++})
++
++const hotList = computed(() => responseData.value?.data ?? [])
++const hotTotal = computed(() => responseData.value?.total ?? 0)
++const updateTime = computed(() => responseData.value?.updateTime ?? '')
++
++// 分页状态
++const currentPage = ref(1)
++const itemsPerPage = ref(20)
++
++const totalPages = computed(() =>
++  Math.ceil(hotList.value.length / itemsPerPage.value)
++)
++
++const paginatedList = computed(() => {
++  const start = (currentPage.value - 1) * itemsPerPage.value
++  const end = start + itemsPerPage.value
++  return hotList.value.slice(start, end)
++})
++
++function goToPage(page: number) {
++  if (page >= 1 && page <= totalPages.value) {
++    currentPage.value = page
++  }
++}
++
++function nextPage() {
++  if (currentPage.value < totalPages.value) {
++    currentPage.value++
++  }
++}
++
++function prevPage() {
++  if (currentPage.value > 1) {
++    currentPage.value--
++  }
++}
++
++// 数据变化时，确保页码安全
++watch(hotList, () => {
++  if (currentPage.value > totalPages.value) {
++    currentPage.value = totalPages.value || 1
++  }
++})
++
++// 状态消息
++const statusMessage = computed(() => {
++  if (pending.value) return '加载中...'
++  if (error.value) return error.value.message || '加载失败'
++  if (!hotList.value.length) return '暂无数据'
++  return ''
++})
++</script>
++
++<template>
++  <div class="cardMain">
++    <HotPageHeader
++      :mini-name-type="MiniNameType"
++      :name-type="NameType"
++      :categrory-type="CategroryType"
++      :hot-total="hotTotal"
++      :update-time="updateTime"
++    />
++
++    <div class="cardBody">
++      <HotPageLoading
++        v-if="pending || error || !hotList.length"
++        :pending="pending"
++        :error="error"
++        :is-empty="!pending && !error && !hotList.length"
++        :message="statusMessage"
++        @retry="refresh"
++      />
++
++      <div v-else class="contentArea">
++        <HotCardList
++          :items="paginatedList"
++          :current-page="currentPage"
++          :items-per-page="itemsPerPage"
++        />
++
++        <HotPagePagination
++          v-if="totalPages > 1"
++          :current-page="currentPage"
++          :total-pages="totalPages"
++          @go="goToPage"
++          @prev="prevPage"
++          @next="nextPage"
++        />
++      </div>
++    </div>
++  </div>
++</template>
++
++<style lang="scss" scoped>
++$primary-color: #409eff;
++$text-secondary: #666;
++$border-light: #eee;
++$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
++$bg-white: #fff;
++$spacing-lg: 16px;
++$spacing-xl: 20px;
++$radius-xl: 12px;
++
++.cardMain {
++  border: 1px solid $border-light;
++  border-radius: $radius-xl;
++  padding: $spacing-lg;
++  background: $bg-white;
++  box-shadow: $shadow-sm;
++}
++
++.cardBody {
++  min-height: 120px;
++
++  .contentArea {
++    display: flex;
++    flex-direction: column;
++  }
++}
++</style>
+\ No newline at end of file
+diff --git a/app/composables/useHotAxios.ts b/app/composables/useHotAxios.ts
+new file mode 100644
+index 0000000..789e584
+--- /dev/null
++++ b/app/composables/useHotAxios.ts
+@@ -0,0 +1,64 @@
++import appConfig from "~/app.config";
++
++// plugins/http.ts
++export default defineNuxtPlugin(() => {
++  // ✅ 统一配置（替代 switch）
++  const HTTP_CONFIG = {
++    baseURL: appConfig.hotGetConfig.Api,
++    timeout: 30000
++  } as const;
++
++  // 创建实例
++  const http = $fetch.create({
++    baseURL: appConfig.hotGetConfig.Api,
++    timeout: appConfig.hotGetConfig.timeout,
++
++    // ✅ 请求拦截
++    onRequest({ options }) {
++      const token = localStorage.getItem("token");
++
++      if (token) {
++        options.headers = {
++          ...options.headers,
++        };
++      }
++    },
++
++    // ✅ 响应成功
++    onResponse({ response }) {
++      return response._data;
++    },
++
++    // ❗响应错误
++    onResponseError({ response }) {
++      const data = response?._data;
++
++      const messageMap: Record<number, string> = {
++        401: "请登录后使用",
++        301: "请求路径发生跳转",
++        403: "暂无访问权限",
++        404: "请求资源不存在",
++        500: "内部服务器错误"
++      };
++
++      const msg =
++        data?.message ||
++        messageMap[response.status] ||
++        "请求失败，请稍后重试";
++
++      // 这里按你项目实际 UI 库替换
++      if (process.client) {
++        // @ts-ignore
++        window.$message?.error(msg);
++      }
++
++      return Promise.reject(response);
++    }
++  });
++
++  return {
++    provide: {
++      http
++    }
++  };
++});
+\ No newline at end of file
+diff --git a/app/pages/essays-2.vue b/app/pages/essays-2.vue
+deleted file mode 100644
+index 0f1e7bd..0000000
+--- a/app/pages/essays-2.vue
++++ /dev/null
+@@ -1,1029 +0,0 @@
+-<script setup lang="ts">
+-import { ref, onMounted, computed } from 'vue'
+-
+-// 全局配置
+-const appConfig = useAppConfig()
+-const layoutStore = useLayoutStore()
+-
+-// 设置侧边栏组件
+-layoutStore.setAside(['blog-stats', 'blog-tech', 'blog-log'])
+-
+-// SEO 配置
+-useSeoMeta({
+-    title: '瞬间',
+-    ogType: 'profile',
+-    description: `${appConfig.title}的碎碎念页面，记录生活点滴，一些想法和生活。`,
+-})
+-
+-// API 配置常量
+-const API_CONFIG = {
+-    MEMO_API: 'https://moment.say.yjluo.top/api/memo/list',
+-    USER_API: 'https://moment.say.yjluo.top/api/user/profile',
+-    PAGE_SIZE: 30,
+-}
+-// ---------- 新增：用户信息状态管理 ----------
+-interface UserProfile {
+-  username: string;
+-  nickname: string;
+-  avatarUrl: string;
+-  slogan: string;
+-}
+-const userState = ref({
+-  loading: true,
+-  error: false,
+-  data: null as UserProfile | null,
+-});
+-// 新增：请求用户信息的函数
+-async function fetchUserProfile() {
+-  try {
+-    userState.value.loading = true;
+-    userState.value.error = false;
+-
+-    const response = await fetch(API_CONFIG.USER_API, {
+-      method: 'POST',
+-      headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({}), // 按需补充请求体参数
+-    });
+-
+-    if (!response.ok) throw new Error(`HTTP错误：${response.status}`);
+-
+-    const data = await response.json();
+-    if (data.code === 0 && data.data) {
+-      userState.value.data = data.data as UserProfile;
+-    }
+-  } catch (err) {
+-    console.error('获取用户信息失败：', err);
+-    userState.value.error = true;
+-  } finally {
+-    userState.value.loading = false;
+-  }
+-}
+-// ---------- 新增结束 ----------
+-
+-// 计算属性 - 用户信息
+-const user = computed(() => userState.value.data)
+-const userLoading = computed(() => userState.value.loading)
+-const userError = computed(() => userState.value.error)
+-
+-// 加载外部脚本
+-onMounted(() => {
+-  const loadScript = (src: string) => {
+-    return new Promise((resolve, reject) => {
+-      if (document.querySelector(`script[src="${src}"]`)) return resolve(null)
+-      
+-      const script = document.createElement('script')
+-      script.src = src
+-      script.async = true
+-      script.onload = resolve
+-      script.onerror = reject
+-      document.head.appendChild(script)
+-    })
+-  }
+-
+-  loadScript('https://jsd.myxz.top/npm/aplayer/dist/APlayer.min.js')
+-    .catch(err => console.error('脚本加载失败:', err))
+-  loadScript('https://jsd.myxz.top/npm/meting@2/dist/Meting.min.js')
+-    .catch(err => console.error('脚本加载失败:', err))
+-
+-  fetchTalks();
+-  fetchUserProfile();
+-})
+-
+-interface TalkItem {
+-    content: {
+-        text: string
+-        images: string[]
+-        music?: {
+-            type: 'song' | 'playlist'
+-            id: string
+-            server: string
+-            api: string
+-        }
+-        video?: {
+-            type: 'bilibili' | 'youtube' | 'online'
+-            url: string
+-            id?: string
+-        }
+-        doubanMovie?: {
+-            url: string
+-            title: string
+-            image: string
+-            director: string
+-            rating: string
+-            runtime: string
+-        }
+-        doubanBook?: {
+-            url: string
+-            title: string
+-            image: string
+-            author: string
+-            pubDate: string
+-            rating: string
+-        }
+-        externalLink?: {
+-            url: string
+-            title: string
+-            favicon: string
+-        }
+-    }
+-    user: {
+-        username: string
+-        nickname: string
+-        avatarUrl: string
+-    }
+-    date: string
+-    location: string
+-    tags: string[]
+-}
+-
+-// 状态管理
+-const talksState = useState('essayTalks', () => ({
+-    talks: [] as TalkItem[],
+-    loading: true,
+-    error: false,
+-    lastFetchTime: 0,
+-}))
+-// 计算属性
+-const talks = computed(() => talksState.value.talks)
+-const loading = computed(() => talksState.value.loading)
+-const error = computed(() => talksState.value.error)
+-// 合并加载状态（控制过渡动画）
+-const combinedLoading = computed(() => talksState.value.loading || userState.value.loading);
+-const progress = ref(0); // 加载进度条
+-const combinedError = computed(() => userState.value.error || talksState.value.error);
+-function formatTime(time: string) {
+-    const d = new Date(time)
+-    const ls = [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()]
+-    const r = ls.map(a => (a.toString().length === 1 ? `0${a}` : a))
+-    return `${r[0]}-${r[1]}-${r[2]} ${r[3]}:${r[4]}`
+-}
+-
+-function formatContent(item: any) {
+-    let content = item.content
+-    const imgs = item.imgs ? item.imgs.split(',') : []
+-    const ext = JSON.parse(item.ext || '{}')
+-
+-    content = content
+-        .replace(/\[(.*?)\]\((.*?)\)/g, `<a class="talk_content_link" target="_blank" rel="nofollow" href="$2">@$1</a>`)
+-        .replace(/- \[ \]/g, '⚪')
+-        .replace(/- \[x\]/g, '⚫')
+-        .replace(/\n/g, '<br>')
+-
+-    content = `<div class="talk_content_text">${content}</div>`
+-
+-    return {
+-        text: content,
+-        images: imgs.map((img: string) => img.startsWith('http') ? img : `https:${img}`),
+-        music: ext.music?.type === 'tencent'
+-            ?{
+-                    type: ext.music.type,
+-                    server: ext.music.server,
+-                    id: ext.music.id,
+-                    api: ext.music.api
+-                }
+-            : null,
+-        video: ext.video?.type === 'bilibili'
+-            ? {
+-                    type: 'bilibili',
+-                    url: ext.video.value,
+-                    id: ext.video.value.match(/BV\w+/)?.[0],
+-                }
+-            : ext.video?.type === 'youtube'
+-                ? {
+-                        type: 'youtube',
+-                        url: ext.video.value,
+-                        id: ext.video.value.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)?.[1],
+-                    }
+-                : ext.video?.type === 'online'
+-                    ? {
+-                            type: 'online',
+-                            url: ext.video.value,
+-                        }
+-                    : null,
+-        doubanMovie: ext.doubanMovie?.id
+-            ? {
+-                    url: ext.doubanMovie.url,
+-                    title: ext.doubanMovie.title,
+-                    image: ext.doubanMovie.image,
+-                    director: ext.doubanMovie.director,
+-                    rating: ext.doubanMovie.rating,
+-                    runtime: ext.doubanMovie.runtime,
+-                }
+-            : null,
+-        doubanBook: ext.doubanBook?.id
+-            ? {
+-                    url: ext.doubanBook.url,
+-                    title: ext.doubanBook.title,
+-                    image: ext.doubanBook.image,
+-                    author: ext.doubanBook.author,
+-                    pubDate: ext.doubanBook.pubDate,
+-                    rating: ext.doubanBook.rating,
+-                }
+-            : null,
+-        externalLink: item.externalUrl
+-            ? {
+-                    url: item.externalUrl,
+-                    title: item.externalTitle,
+-                    favicon: item.externalFavicon,
+-                }
+-            : null,
+-    }
+-}
+-
+-// 获取动态列表（原有逻辑）
+-async function fetchTalks() {
+-  // 如果距离上次获取时间小于30分钟，则使用缓存
+-  const now = Date.now()
+-  if (now - talksState.value.lastFetchTime < 30 * 60 * 1000) {
+-    return
+-  }
+-  try {
+-    talksState.value.loading = true;
+-    talksState.value.error = false;
+-    const response = await fetch(API_CONFIG.MEMO_API, {
+-      method: 'POST',
+-      headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({ size: API_CONFIG.PAGE_SIZE }),
+-    });
+-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+-    const data = await response.json();
+-    if (data.code === 0 && data.data?.list) {
+-      const formattedTalks = data.data.list.map((item: any) => ({
+-        content: formatContent(item),
+-        user: {
+-          username: item.user.username,
+-          nickname: item.user.nickname,
+-          avatarUrl: item.user.avatarUrl,
+-        },
+-        date: formatTime(item.createdAt),
+-        location: item.location || '',
+-        tags: item.tags
+-          ? (typeof item.tags === 'string'
+-              ? item.tags.split(',').filter((tag: string) => tag.trim())
+-              : item.tags)
+-          : ['无标签'],
+-      }));
+-      talksState.value.talks = formattedTalks;
+-      talksState.value.lastFetchTime = Date.now();
+-    }
+-  } catch (err) {
+-    console.error('Error fetching talks:', err);
+-    talksState.value.error = true;
+-  } finally {
+-    talksState.value.loading = false;
+-    if (!talksState.value.error) progress.value = 100; // 动态列表加载完成，进度 100%
+-  }
+-}
+-
+-function goComment(content: string) {
+-    const textContent = content.replace(/<[^>]+>/g, '')
+-    const textarea = document.querySelector('.atk-textarea-wrap .atk-textarea') as HTMLTextAreaElement
+-    if (textarea) {
+-        textarea.value = `> ${textContent}\n\n`
+-        textarea.focus()
+-        textarea.scrollIntoView({ behavior: 'smooth', block: 'center' })
+-    }
+-}
+-
+-// 跳转谷歌地图
+-function searchLocation(location: string) {
+-    if (!location) {
+-        return
+-    }
+-    // 使用谷歌地图搜索服务
+-    const searchUrl = `https://www.google.com/maps/search/${encodeURIComponent(location)}`
+-    window.open(searchUrl, '_blank')
+-}
+-
+-const yearlyTip = computed(() => talks)
+-</script>
+-
+-<template>
+-    <!-- <PageBanner
+-        title="瞬间"
+-        subtitle="记录生活点滴，一些想法"
+-        image="https://lib.bsgun.cn/Hexo-static/img/essay-bg.avif"
+-    >
+-        <template #extra>
+-            <div class="essay-stats">
+-                <div class="powered-by">Powered by moments</div>
+-                <a class="essay-more" href="https://moment.051531.xyz" target="_blank" rel="noopener noreferrer">
+-                    <Icon name="icon-park-twotone:more-app" class="icon" />
+-                    查看更多
+-                </a>
+-            </div>
+-        </template>
+-    </PageBanner> -->
+-
+-    <div class="page-essay">
+-        <div class="talk-container">
+-            <Transition name="fade" mode="out-in">
+-                <!-- 加载中状态 -->
+-                <div v-if="combinedLoading" class="steam-loading-container">
+-                    <div class="steam-loading-header">加载数据中...</div>
+-                    <div class="steam-progress-bar">
+-                        <div class="steam-progress" :style="{ width: `${Math.min((userState.loading ? 0.5 : 0) + (talksState.loading ? 0.5 : 0), 1) * 100}%` }"></div>
+-                    </div>
+-                    <p class="steam-loading-subtext">正在获取用户信息、游戏库和成就数据...</p>
+-                </div>
+-                <div v-else-if="combinedError" class="error-container">
+-                    <Icon name="line-md:alert" class="error-icon" />
+-                    <p>加载失败，请刷新页面重试</p>
+-                </div>
+-                <div v-else class="talk-main">
+-                    <!-- 用户资料区域 -->
+-                    <div class="profile">
+-                        <div class="header">
+-                            <img 
+-                                class="avatar" 
+-                                :src="userState.data?.avatarUrl" 
+-                                :alt="userState.data?.nickname"
+-                            >
+-                            <div class="info">
+-                                <div class="row">
+-                                    <h2 class="username">
+-                                        {{ userState.data?.nickname || userState.data?.username || '加载中...' }}
+-                                        <Icon name="material-symbols:verified" class="verified" v-if="user" />
+-                                    </h2>
+-                                </div>
+-                                <div class="row" v-if="user">
+-                                    <span class="bio">{{ userState.data?.slogan || '这个人很懒，什么都没留下' }}</span>
+-                                </div>
+-                                <span class="bio" v-for="item in talksState.talks.slice(-999, 1)">更新时间：{{ dayjs(item.date).locale('zh-cn').fromNow().replaceAll(/\s+/g,'') }}</span>
+-                            </div>
+-                        </div>
+-                    </div>
+-                    <!-- 统计卡片区域 -->
+-                    <div class="overview">
+-                        <div class="stat-card">
+-                            <Icon name="material-symbols:post-add" class="stat-icon" />
+-                            <div class="stat-info">
+-                                <div class="stat-label">总发布</div>
+-                                <div class="stat-value">{{ talks.length }}</div>
+-                            </div>
+-                        </div>
+-                        <div class="stat-card">
+-                            <Icon name="material-symbols:image" class="stat-icon" />
+-                            <div class="stat-info">
+-                                <div class="stat-label">总标签</div>
+-                                <div class="stat-value" v-for="item in talksState.talks.slice(-999, 1)">{{ item.tags.length }}</div>
+-                            </div>
+-                        </div>
+-                        <!-- <div class="stat-card">
+-                            <Icon name="material-symbols:music-note" class="stat-icon" />
+-                            <div class="stat-info">
+-                                <div class="stat-label"></div>
+-                                <div class="stat-value">{{ talks.filter(t => t.content.music).length }}</div>
+-                            </div>
+-                        </div> -->
+-                    </div>
+-                    <div class="talks-list">
+-                        <div
+-                            v-for="(item, index) in talks"
+-                            :key="index"
+-                            class="talk-item"
+-                            :style="{ '--delay': `${index * 0.1}s` }"
+-                        >
+-                            <div class="talk-meta">
+-                                <img
+-                                    class="avatar"
+-                                    :src="item.user.avatarUrl"
+-                                    :alt="item.user.nickname"
+-                                >
+-                                <div class="info">
+-                                    <div class="talk-nick">
+-                                        {{ item.user.nickname }}
+-                                        <Icon name="material-symbols:verified verified" class="verified" />
+-                                    </div>
+-                                </div>
+-                            </div>
+-                            <div class="talk-content">
+-                                <div class="talk_content_text" v-html="item.content.text"></div>
+-                                
+-                                <div v-if="item.content.music">
+-                                    <link src="https://jsd.myxz.top/npm/aplayer/dist/APlayer.min.css" rel="stylesheet">
+-                                    <meting-js 
+-                                        :server="item.content.music.server"
+-                                        :id="item.content.music.id"
+-                                        :api="item.content.music.api" 
+-                                    ></meting-js>
+-                                </div>
+-
+-                                <div v-if="item.content.images.length" class="zone_imgbox">
+-                                    <figure
+-                                        v-for="(img, imgIndex) in item.content.images"
+-                                        :key="imgIndex"
+-                                        class="img-item"
+-                                    >
+-                                        <Pic
+-                                            :src="img"
+-                                            zoom
+-                                            class="talk-img"
+-                                            loading="lazy"
+-                                            :fetchpriority="imgIndex === 0 ? 'high' : 'low'"
+-                                        />
+-                                    </figure>
+-                                </div>
+-
+-                                <div v-if="item.content.video" class="video-container">
+-                                    <iframe
+-                                        v-if="item.content.video.type === 'bilibili'"
+-                                        :src="`//player.bilibili.com/player.html?bvid=${item.content.video.id}&autoplay=0`"
+-                                        scrolling="no"
+-                                        frameborder="no"
+-                                        allowfullscreen="true"
+-                                    />
+-                                    <iframe
+-                                        v-else-if="item.content.video.type === 'youtube'"
+-                                        :src="`https://www.youtube.com/embed/${item.content.video.id}`"
+-                                        frameborder="0"
+-                                        allowfullscreen
+-                                    />
+-                                    <video
+-                                        v-else-if="item.content.video.type === 'online'"
+-                                        :src="item.content.video.url"
+-                                        controls
+-                                        class="online-video"
+-                                    />
+-                                </div>
+-
+-                                <a
+-                                    v-if="item.content.doubanMovie"
+-                                    class="douban-card gradient-card"
+-                                    :href="item.content.doubanMovie.url"
+-                                    target="_blank"
+-                                >
+-                                    <div
+-                                        class="douban-card-bgimg"
+-                                        :style="{ backgroundImage: `url('${item.content.doubanMovie.image}')` }"
+-                                    />
+-                                    <div class="douban-card-left">
+-                                        <div
+-                                            class="douban-card-img"
+-                                            :style="{ backgroundImage: `url('${item.content.doubanMovie.image}')` }"
+-                                        />
+-                                    </div>
+-                                    <div class="douban-card-right">
+-                                        <div class="douban-card-item">
+-                                            <span>电影名: </span>
+-                                            <strong>{{ item.content.doubanMovie.title }}</strong>
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>导演: </span>
+-                                            {{ item.content.doubanMovie.director }}
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>评分: </span>
+-                                            {{ item.content.doubanMovie.rating }}
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>时长: </span>
+-                                            {{ item.content.doubanMovie.runtime }}
+-                                        </div>
+-                                    </div>
+-                                </a>
+-
+-                                <a
+-                                    v-if="item.content.doubanBook"
+-                                    class="douban-card gradient-card"
+-                                    :href="item.content.doubanBook.url"
+-                                    target="_blank"
+-                                >
+-                                    <div
+-                                        class="douban-card-bgimg"
+-                                        :style="{ backgroundImage: `url('${item.content.doubanBook.image}')` }"
+-                                    />
+-                                    <div class="douban-card-left">
+-                                        <div
+-                                            class="douban-card-img"
+-                                            :style="{ backgroundImage: `url('${item.content.doubanBook.image}')` }"
+-                                        />
+-                                    </div>
+-                                    <div class="douban-card-right">
+-                                        <div class="douban-card-item">
+-                                            <span>书名: </span>
+-                                            <strong>{{ item.content.doubanBook.title }}</strong>
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>作者: </span>
+-                                            {{ item.content.doubanBook.author }}
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>出版年份: </span>
+-                                            {{ item.content.doubanBook.pubDate }}
+-                                        </div>
+-                                        <div class="douban-card-item">
+-                                            <span>评分: </span>
+-                                            {{ item.content.doubanBook.rating }}
+-                                        </div>
+-                                    </div>
+-                                </a>
+-
+-                                <div v-if="item.content.externalLink" class="external-link gradient-card">
+-                                    <a :href="item.content.externalLink.url" target="_blank" rel="nofollow">
+-                                        <div class="link-left">
+-                                            <img :src="item.content.externalLink.favicon" :alt="item.content.externalLink.title">
+-                                        </div>
+-                                        <div class="link-right">
+-                                            <div class="link-title">
+-                                                {{ item.content.externalLink.title }}
+-                                            </div>
+-                                            <Icon name="material-symbols:chevron-right" class="icon" />
+-                                        </div>
+-                                    </a>
+-                                </div>
+-                            </div>
+-                            <div class="talk-bottom">
+-                                <div class="talk-tags">
+-                                    <span class="tag">
+-                                        🏷️{{ Array.isArray(item.tags) ? item.tags.join(', ') : item.tags }}
+-                                    </span>
+-                                    <span
+-                                        v-if="item.location"
+-                                        class="location"
+-                                        v-tip="`搜索: ${item.location}`"
+-                                        @click="searchLocation(item.location)"
+-                                    >
+-                                        <Icon name="ph:map-pin-bold" class="location-icon" />
+-                                        {{ item.location }}
+-                                    </span>
+-                                </div>
+-                                <button class="comment-btn" @click="goComment(item.content.text) " v-tip="`评论`">
+-                                    <Icon name="ph:chats-bold" class="icon" />
+-                                </button>
+-                            </div>
+-                        </div>
+-                        <!-- 底部提示 -->
+-                        <div class="talks-footer">
+-                            <p>仅显示最近 30 条记录</p>
+-                        </div>
+-                    </div>
+-                </div>
+-                
+-            </Transition>
+-        </div>
+-    </div>
+-    <PostComment key="/essay" />
+-</template>
+-
+-<style lang="scss" scoped>
+-// stats 区域
+-.essay-stats {
+-    display: flex;
+-    flex-direction: column;
+-    align-items: flex-end;
+-    gap: .1rem;
+-    color: #eee;
+-    text-shadow: 0 4px 5px rgba(0, 0, 0, 0.5);
+-    font-family: var(--font-monospace);
+-    opacity: 0.7;
+-
+-    .powered-by {
+-        font-size: .7rem;
+-    }
+-
+-    .essay-more {
+-        display: flex;
+-        align-items: center;
+-        gap: 4px;
+-        font-size: .8rem;
+-        opacity: .8;
+-        transition: all 0.2s;
+-
+-        &:hover {
+-            color: #fff;
+-            opacity: 1;
+-        }
+-    }
+-}
+-.page-essay {
+-    margin: 1rem;
+-    animation: float-in 0.2s backwards;
+-    .talk-container {
+-        .talk-main {
+-            display: flex;
+-            flex-direction: column;
+-        }
+-        /* Steam 风格加载页 */
+-        .steam-loading-container {
+-            display: flex;
+-            flex-direction: column;
+-            align-items: center;
+-            justify-content: center;
+-            height: 400px;
+-            color: #333;
+-            gap: 16px;
+-
+-            .steam-loading-header {
+-                font-size: 1.2rem;
+-                font-weight: bold;
+-                color: var(--c-text);
+-            }
+-
+-            .steam-progress-bar {
+-                width: 80%;
+-                height: 5px;
+-                background-color: var(--c-text);
+-                border-radius: 5px;
+-                overflow: hidden;
+-
+-                .steam-progress {
+-                    height: 100%;
+-                    background-color:  var(--c-primary);
+-                    transition: width 0.3s ease;
+-                }
+-            }
+-
+-            .steam-loading-subtext {
+-                font-size: 0.9rem;
+-                color: #666;
+-            }
+-        }
+-    }
+-
+-    .profile {
+-        background: var(--ld-bg-card);
+-        border-radius: 8px;
+-        padding: 1rem;
+-        box-shadow: 0 0 0 1px var(--c-bg-soft);
+-        margin-bottom: 1rem;
+-        display: flex;
+-        gap: 0.5rem;
+-        animation: float-in 0.3s backwards;
+-        transition: border-color 0.3s;
+-        
+-
+-        .header {
+-            align-items: flex-start;
+-            display: flex;
+-            gap: 1em;
+-            .avatar {
+-                flex-shrink: 0;
+-                height: 100px;
+-                object-fit: cover;
+-                width: 100px;
+-                border: 2px solid var(--c-primary);
+-                border-radius: 50%;
+-                img:before {
+-                    background-color: var(--c-border);
+-                    color: var(--c-bg-soft);
+-                    content: attr(alt);
+-                    display: grid;
+-                    font: 700 1.5rem / 1.2 var(--font-serif);
+-                    inset: 0;
+-                    overflow: visible;
+-                    padding: .5em;
+-                    place-content: center;
+-                    position: absolute;
+-                    text-align: center;
+-                    text-shadow: none;
+-                    word-break: normal;
+-                }
+-            }
+-            .info {
+-                min-width: 0px;
+-                flex: 1 1 0%;
+-
+-                .row {
+-                    align-items: center;
+-                    display: flex;
+-                    flex-wrap: wrap;
+-                    margin-bottom: 0.5em;
+-                    gap: 0.75em;
+-
+-                    .username {
+-                        color: var(--c-text);
+-                        font-size: 1.25em;
+-                        font-weight: 600;
+-                        word-break: break-word;
+-                        margin: 0px;
+-                    }
+-                }
+-            }
+-        }
+-    }
+-    // 统计卡片区域
+-    .overview {
+-        display: grid;
+-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+-        gap: 1rem;
+-        
+-        .stat-card {
+-            background: var(--ld-bg-card);
+-            border-radius: 8px;
+-            padding: 1rem;
+-            box-shadow: 0 0 0 1px var(--c-bg-soft);
+-            margin-bottom: 1rem;
+-            display: flex;
+-            gap: 0.5rem;
+-            animation: float-in 0.3s backwards;
+-            transition: border-color 0.3s;
+-            align-items: center;
+-            
+-            .stat-icon {
+-                font-size: 1.8rem;
+-                color: var(--c-primary);
+-            }
+-            
+-            .stat-info {
+-                .stat-label {
+-                    font-size: 0.9rem;
+-                    color: var(--c-text-2);
+-                }
+-                
+-                .stat-value {
+-                    font-size: 1.4rem;
+-                    font-weight: bold;
+-                    color: var(--c-text);
+-                }
+-            }
+-        }
+-    }
+-    .talk-item {
+-        border-radius: 8px;
+-        padding: 1rem;
+-        box-shadow: 0 0 0 1px var(--c-bg-soft);
+-        margin-bottom: 1rem;
+-        display: flex;
+-        flex-direction: column;
+-        gap: .5rem;
+-        animation: float-in 0.3s backwards;
+-        animation-delay: var(--delay);
+-    }
+-
+-    .talk-meta {
+-        display: flex;
+-        align-items: center;
+-        gap: 10px;
+-
+-        .avatar {
+-            width: 3em;
+-            border-radius: 2em;
+-            box-shadow: 2px 4px 1rem var(--ld-shadow);
+-        }
+-
+-        .info {
+-            .talk-nick {
+-                display: flex;
+-                align-items: center;
+-                gap: 5px;
+-
+-                .verified {
+-                    color: var(--c-primary);
+-                    font-size: 16px;
+-                }
+-            }
+-
+-            .talk-date {
+-                font-size: 0.8rem;
+-                color: var(--c-text-3);
+-                font-family: var(--font-monospace);
+-            }
+-        }
+-    }
+-
+-    .talk-content {
+-        line-height: 1.6;
+-        display: flex;
+-        flex-direction: column;
+-        gap: .5rem;
+-        color: var(--c-text-2);
+-
+-        :deep(.talk_content_link) {
+-            margin: 0 -0.1em;
+-            padding: 0 0.1em;
+-            background: linear-gradient(var(--c-primary-soft), var(--c-primary-soft)) no-repeat center bottom / 100% 0.1em;
+-            color: var(--c-primary);
+-            text-decoration: none;
+-            transition: all 0.2s;
+-
+-            &:hover {
+-                border-radius: 0.3em;
+-                background-size: 100% 100%;
+-            }
+-        }
+-
+-        :deep(.zone_imgbox) {
+-            display: grid;
+-            grid-template-columns: repeat(3, 1fr);
+-            gap: 8px;
+-
+-            .img-item {
+-                position: relative;
+-                padding-bottom: 100%;
+-                border-radius: 8px;
+-                overflow: hidden;
+-
+-                img {
+-                    position: absolute;
+-                    inset: 0;
+-                    width: 100%;
+-                    height: 100%;
+-                    object-fit: cover;
+-                    cursor: zoom-in;
+-                    transition: transform .3s;
+-
+-                    &:hover {
+-                        transform: scale(1.05);
+-                    }
+-                }
+-            }
+-        }
+-
+-        .video-container {
+-            position: relative;
+-            width: 100%;
+-            padding-bottom: 56.25%;
+-            border-radius: 8px;
+-            overflow: hidden;
+-
+-            iframe,
+-            video {
+-                position: absolute;
+-                inset: 0;
+-                width: 100%;
+-                height: 100%;
+-            }
+-
+-            .online-video {
+-                object-fit: cover;
+-            }
+-        }
+-
+-        .douban-card {
+-            display: flex;
+-            overflow: hidden;
+-            text-decoration: none;
+-            background-color: var(--c-bg-2);
+-            box-shadow: 0 0 0 1px var(--c-bg-soft);
+-            position: relative;
+-            height: 100px;
+-
+-            .douban-card-bgimg {
+-                position: absolute;
+-                inset: 0;
+-                filter: blur(15px);
+-                opacity: 0.3;
+-                background-size: cover;
+-                background-position: center;
+-            }
+-
+-            .douban-card-left {
+-                flex: 0 0 80px;
+-                padding: 10px;
+-                position: relative;
+-
+-                .douban-card-img {
+-                    width: 100%;
+-                    height: 100%;
+-                    background-size: cover;
+-                    background-position: center;
+-                    border-radius: 8px;
+-                }
+-            }
+-
+-            .douban-card-right {
+-                flex: 1;
+-                padding: 10px;
+-                position: relative;
+-
+-                .douban-card-item {
+-                    color: var(--c-text);
+-                    font-size: 0.8rem;
+-                }
+-            }
+-        }
+-
+-        .external-link {
+-            overflow: hidden;
+-            background-color: var(--c-bg-2);
+-            box-shadow: 0 0 0 1px var(--c-bg-soft);
+-            transition: all .2s;
+-
+-            a {
+-                display: flex;
+-                text-decoration: none;
+-                height: 60px;
+-                align-items: center;
+-                gap: 12px;
+-                padding: 8px;
+-
+-                .link-left {
+-                    width: 44px;
+-                    height: 44px;
+-                    overflow: hidden;
+-                    flex-shrink: 0;
+-
+-                    img {
+-                        width: 100%;
+-                        height: 100%;
+-                        object-fit: contain;
+-                        border-radius: 8px;
+-                        transition: transform .3s;
+-                    }
+-                }
+-
+-                .link-right {
+-                    flex: 1;
+-                    display: flex;
+-                    align-items: center;
+-                    gap: 6px;
+-
+-                    .link-title {
+-                        color: var(--c-text-2);
+-                        overflow: hidden;
+-                        display: -webkit-box;
+-                        -webkit-line-clamp: 1;
+-                        -webkit-box-orient: vertical;
+-                        font-size: 0.95rem;
+-                        transition: all .2s;
+-                    }
+-
+-                    .icon {
+-                        color: var(--c-text-3);
+-                        transition: transform 0.2s ease;
+-                    }
+-                }
+-
+-                &:hover {
+-                    .link-left img {
+-                        transform: scale(1.05);
+-                    }
+-
+-                    .icon {
+-                        transform: translateX(4px) scale(1.6);
+-                    }
+-                }
+-            }
+-        }
+-    }
+-
+-    .talk-bottom {
+-        display: flex;
+-        justify-content: space-between;
+-        align-items: center;
+-        color: var(--c-text-3);
+-
+-        .talk-tags {
+-            display: flex;
+-            gap: 4px;
+-            font-size: .7rem;
+-
+-            .tag,
+-            .location {
+-                background-color: var(--c-bg-2);
+-                border-radius: 4px;
+-                cursor: pointer;
+-                display: flex;
+-                padding: 2px 4px;
+-                transition: all .2s;
+-
+-                &:hover {
+-                    opacity: 0.8;
+-                }
+-            }
+-
+-            .location {
+-                color: var(--c-primary);
+-            }
+-        }
+-    }
+-
+-    .loading-container,
+-    .error-container {
+-        display: flex;
+-        flex-direction: column;
+-        align-items: center;
+-        justify-content: center;
+-        height: 500px;
+-        color: var(--c-text-2);
+-        gap: 12px;
+-
+-        .loading-spinner {
+-            width: 40px;
+-            height: 40px;
+-            border: 3px solid var(--c-bg-3);
+-            border-top: 3px solid var(--c-primary);
+-            border-radius: 50%;
+-            animation: spin 1s linear infinite;
+-        }
+-
+-        .error-icon {
+-            font-size: 4rem;
+-            color: var(--c-danger);
+-        }
+-    }
+-
+-    .talks-footer {
+-        text-align: center;
+-        padding: 2rem 0;
+-        color: var(--c-text-3);
+-        font-size: 0.9rem;
+-    }
+-}
+-
+-@keyframes spin {
+-    0% { transform: rotate(0deg); }
+-    100% { transform: rotate(360deg); }
+-}
+-</style>
+\ No newline at end of file
+diff --git a/app/pages/hot.vue b/app/pages/hot.vue
+new file mode 100644
+index 0000000..4231428
+--- /dev/null
++++ b/app/pages/hot.vue
+@@ -0,0 +1,39 @@
++<script setup lang="ts">
++import HotPageCardItem from '~/components/yjluo/hot/hotPageMain.vue';
++
++const hotTab = ['哔哩哔哩', '微博', '抖音', '知乎', '36氪', '百度']
++const layoutStore = useLayoutStore()
++// 设置侧边栏组件
++layoutStore.setAside(['blog-stats', 'blog-tech', 'blog-log'])
++</script>
++
++<template>
++  <div class="HotPageMain">
++    <tab :tabs="hotTab">
++      <template v-slot:tab1>
++        <HotPageCardItem -cache='true' -name-type='哔哩哔哩' -mini-name-type='bilibili' -categrory-type='热搜' />
++      </template>
++      <template v-slot:tab2>
++        <HotPageCardItem -cache='true' -name-type='微博' -mini-name-type='weibo' -categrory-type='热搜' />
++      </template>
++      <template v-slot:tab3>
++        <HotPageCardItem -cache='true' -name-type='抖音' -mini-name-type='douyin' -categrory-type='热搜' />
++      </template>
++      <template v-slot:tab4>
++        <HotPageCardItem -cache='true' -name-type='知乎' -mini-name-type='zhihu' -categrory-type='热搜' />
++      </template>
++      <template v-slot:tab5>
++        <HotPageCardItem -cache='true' -name-type='36氪' -mini-name-type='36kr' -categrory-type='热搜' />
++      </template>
++      <template v-slot:tab6>
++        <HotPageCardItem -cache='true' -name-type='百度' -mini-name-type='baidu' -categrory-type='热搜' />
++      </template>
++    </tab>    
++  </div>
++</template>
++
++<style lang="scss" scoped>
++.HotPageMain {
++  padding: 1rem;
++}
++</style>
+\ No newline at end of file
+diff --git a/app/types/hot.ts b/app/types/hot.ts
+new file mode 100644
+index 0000000..102c172
+--- /dev/null
++++ b/app/types/hot.ts
+@@ -0,0 +1,20 @@
++// types/api.d.ts
++// 1.定义 API 的统一响应外壳（通用壳）
++export interface ApiResponse {
++  total: number;
++  updateTime: string;
++  data: HotItem[]; // 这里指定具体的数组类型
++}
++
++// 2.定义热搜单条数据的结构
++export interface HotItem {
++  id: string;
++  title: string;
++  desc: string;
++  cover: string;
++  author: string;
++  timestamp: null | number;
++  hot: number;
++  url: string;
++  mobileUrl: string;
++}
+\ No newline at end of file
+diff --git a/public/image/PageImageAssets/hot/36kr.avif b/public/image/PageImageAssets/hot/36kr.avif
+new file mode 100644
+index 0000000..5100d8a
+Binary files /dev/null and b/public/image/PageImageAssets/hot/36kr.avif differ
+diff --git a/public/image/PageImageAssets/hot/acfun.avif b/public/image/PageImageAssets/hot/acfun.avif
+new file mode 100644
+index 0000000..cd51ccc
+Binary files /dev/null and b/public/image/PageImageAssets/hot/acfun.avif differ
+diff --git a/public/image/PageImageAssets/hot/baidu.avif b/public/image/PageImageAssets/hot/baidu.avif
+new file mode 100644
+index 0000000..6e1c4af
+Binary files /dev/null and b/public/image/PageImageAssets/hot/baidu.avif differ
+diff --git a/public/image/PageImageAssets/hot/bilibili.avif b/public/image/PageImageAssets/hot/bilibili.avif
+new file mode 100644
+index 0000000..8d85ff2
+Binary files /dev/null and b/public/image/PageImageAssets/hot/bilibili.avif differ
+diff --git a/public/image/PageImageAssets/hot/douban-group.avif b/public/image/PageImageAssets/hot/douban-group.avif
+new file mode 100644
+index 0000000..1398e9b
+Binary files /dev/null and b/public/image/PageImageAssets/hot/douban-group.avif differ
+diff --git a/public/image/PageImageAssets/hot/douban-movie.avif b/public/image/PageImageAssets/hot/douban-movie.avif
+new file mode 100644
+index 0000000..643da0b
+Binary files /dev/null and b/public/image/PageImageAssets/hot/douban-movie.avif differ
+diff --git a/public/image/PageImageAssets/hot/douyin.avif b/public/image/PageImageAssets/hot/douyin.avif
+new file mode 100644
+index 0000000..c799372
+Binary files /dev/null and b/public/image/PageImageAssets/hot/douyin.avif differ
+diff --git a/public/image/PageImageAssets/hot/genshin.avif b/public/image/PageImageAssets/hot/genshin.avif
+new file mode 100644
+index 0000000..1409abf
+Binary files /dev/null and b/public/image/PageImageAssets/hot/genshin.avif differ
+diff --git a/public/image/PageImageAssets/hot/github.avif b/public/image/PageImageAssets/hot/github.avif
+new file mode 100644
+index 0000000..0d83534
+Binary files /dev/null and b/public/image/PageImageAssets/hot/github.avif differ
+diff --git a/public/image/PageImageAssets/hot/hellogithub.avif b/public/image/PageImageAssets/hot/hellogithub.avif
+new file mode 100644
+index 0000000..10dda60
+Binary files /dev/null and b/public/image/PageImageAssets/hot/hellogithub.avif differ
+diff --git a/public/image/PageImageAssets/hot/honkai.avif b/public/image/PageImageAssets/hot/honkai.avif
+new file mode 100644
+index 0000000..1d4d260
+Binary files /dev/null and b/public/image/PageImageAssets/hot/honkai.avif differ
+diff --git a/public/image/PageImageAssets/hot/ithome.avif b/public/image/PageImageAssets/hot/ithome.avif
+new file mode 100644
+index 0000000..e7c386e
+Binary files /dev/null and b/public/image/PageImageAssets/hot/ithome.avif differ
+diff --git a/public/image/PageImageAssets/hot/jianshu.avif b/public/image/PageImageAssets/hot/jianshu.avif
+new file mode 100644
+index 0000000..e86413b
+Binary files /dev/null and b/public/image/PageImageAssets/hot/jianshu.avif differ
+diff --git a/public/image/PageImageAssets/hot/juejin.avif b/public/image/PageImageAssets/hot/juejin.avif
+new file mode 100644
+index 0000000..7913736
+Binary files /dev/null and b/public/image/PageImageAssets/hot/juejin.avif differ
+diff --git a/public/image/PageImageAssets/hot/kuaishou.avif b/public/image/PageImageAssets/hot/kuaishou.avif
+new file mode 100644
+index 0000000..347224a
+Binary files /dev/null and b/public/image/PageImageAssets/hot/kuaishou.avif differ
+diff --git a/public/image/PageImageAssets/hot/lol.avif b/public/image/PageImageAssets/hot/lol.avif
+new file mode 100644
+index 0000000..1ad7052
+Binary files /dev/null and b/public/image/PageImageAssets/hot/lol.avif differ
+diff --git a/public/image/PageImageAssets/hot/netease-news.avif b/public/image/PageImageAssets/hot/netease-news.avif
+new file mode 100644
+index 0000000..2f32f07
+Binary files /dev/null and b/public/image/PageImageAssets/hot/netease-news.avif differ
+diff --git a/public/image/PageImageAssets/hot/netease_music_toplist.avif b/public/image/PageImageAssets/hot/netease_music_toplist.avif
+new file mode 100644
+index 0000000..959b58b
+Binary files /dev/null and b/public/image/PageImageAssets/hot/netease_music_toplist.avif differ
+diff --git a/public/image/PageImageAssets/hot/ngabbs.avif b/public/image/PageImageAssets/hot/ngabbs.avif
+new file mode 100644
+index 0000000..0bfc550
+Binary files /dev/null and b/public/image/PageImageAssets/hot/ngabbs.avif differ
+diff --git a/public/image/PageImageAssets/hot/qq-news.avif b/public/image/PageImageAssets/hot/qq-news.avif
+new file mode 100644
+index 0000000..34a644d
+Binary files /dev/null and b/public/image/PageImageAssets/hot/qq-news.avif differ
+diff --git a/public/image/PageImageAssets/hot/qq_music_toplist.avif b/public/image/PageImageAssets/hot/qq_music_toplist.avif
+new file mode 100644
+index 0000000..474516d
+Binary files /dev/null and b/public/image/PageImageAssets/hot/qq_music_toplist.avif differ
+diff --git a/public/image/PageImageAssets/hot/sspai.avif b/public/image/PageImageAssets/hot/sspai.avif
+new file mode 100644
+index 0000000..d8039d1
+Binary files /dev/null and b/public/image/PageImageAssets/hot/sspai.avif differ
+diff --git a/public/image/PageImageAssets/hot/starrail.avif b/public/image/PageImageAssets/hot/starrail.avif
+new file mode 100644
+index 0000000..4b056f1
+Binary files /dev/null and b/public/image/PageImageAssets/hot/starrail.avif differ
+diff --git a/public/image/PageImageAssets/hot/thepaper.avif b/public/image/PageImageAssets/hot/thepaper.avif
+new file mode 100644
+index 0000000..c916afa
+Binary files /dev/null and b/public/image/PageImageAssets/hot/thepaper.avif differ
+diff --git a/public/image/PageImageAssets/hot/tieba.avif b/public/image/PageImageAssets/hot/tieba.avif
+new file mode 100644
+index 0000000..55d8c00
+Binary files /dev/null and b/public/image/PageImageAssets/hot/tieba.avif differ
+diff --git a/public/image/PageImageAssets/hot/toutiao.avif b/public/image/PageImageAssets/hot/toutiao.avif
+new file mode 100644
+index 0000000..a0159fa
+Binary files /dev/null and b/public/image/PageImageAssets/hot/toutiao.avif differ
+diff --git a/public/image/PageImageAssets/hot/v2ex.avif b/public/image/PageImageAssets/hot/v2ex.avif
+new file mode 100644
+index 0000000..800baa7
+Binary files /dev/null and b/public/image/PageImageAssets/hot/v2ex.avif differ
+diff --git a/public/image/PageImageAssets/hot/weibo.avif b/public/image/PageImageAssets/hot/weibo.avif
+new file mode 100644
+index 0000000..2a6e414
+Binary files /dev/null and b/public/image/PageImageAssets/hot/weibo.avif differ
+diff --git a/public/image/PageImageAssets/hot/weread.avif b/public/image/PageImageAssets/hot/weread.avif
+new file mode 100644
+index 0000000..e46700e
+Binary files /dev/null and b/public/image/PageImageAssets/hot/weread.avif differ
+diff --git a/public/image/PageImageAssets/hot/zhihu-daily.avif b/public/image/PageImageAssets/hot/zhihu-daily.avif
+new file mode 100644
+index 0000000..3f5cad1
+Binary files /dev/null and b/public/image/PageImageAssets/hot/zhihu-daily.avif differ
+diff --git a/public/image/PageImageAssets/hot/zhihu.avif b/public/image/PageImageAssets/hot/zhihu.avif
+new file mode 100644
+index 0000000..b00a25c
+Binary files /dev/null and b/public/image/PageImageAssets/hot/zhihu.avif differ
+diff --git "a/\346\234\252\345\221\275\345\220\215.base" "b/\346\234\252\345\221\275\345\220\215.base"
+deleted file mode 100644
+index f165474..0000000
+--- "a/\346\234\252\345\221\275\345\220\215.base"
++++ /dev/null
+@@ -1,3 +0,0 @@
+-views:
+-  - type: table
+-    name: 表格

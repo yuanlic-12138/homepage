@@ -1,0 +1,19 @@
+{
+  "name": "cotovo-home",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@iconify/vue": "^5.0.0",
+    "fast-xml-parser": "^5.5.12",
+    "nuxt": "^3.11.2",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  }
+}
