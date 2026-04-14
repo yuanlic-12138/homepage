@@ -51,10 +51,10 @@ export function createHomeTabs(counts: {
   return [
     { key: 'overview', label: '概览', icon: 'ph:book-open' },
     { key: 'article', label: '文章', icon: 'ph:article-medium' },
+    { key: 'focus', label: '专注', icon: 'ph:list-checks', badge: counts.focusCount },
     { key: 'talk', label: '说说', icon: 'ph:chat-circle-text', badge: counts.talkCount },
     { key: 'anime', label: '追番', icon: 'ph:television', badge: counts.animeCount },
-    { key: 'hot', label: '热榜', icon: 'ph:fire' },
-    { key: 'focus', label: '专注', icon: 'ph:list-checks', badge: counts.focusCount }
+    { key: 'hot', label: '热榜', icon: 'ph:fire' }
   ]
 }
 

@@ -14,19 +14,9 @@
           <HomeOverviewPanel />
         </div>
 
-        <!-- ========== TAB: Hot ========== -->
-        <div v-show="activeTab === 'hot'">
-          <HotDashboard />
-        </div>
-
         <!-- ========== TAB: Article ========== -->
         <div v-show="activeTab === 'article'">
           <ArticleFeed />
-        </div>
-
-        <!-- ========== TAB: Talk ========== -->
-        <div v-show="activeTab === 'talk'">
-          <TalkMoments />
         </div>
 
         <!-- ========== TAB: Focus ========== -->
@@ -34,9 +24,19 @@
           <HomeFocusPanel />
         </div>
 
+        <!-- ========== TAB: Talk ========== -->
+        <div v-show="activeTab === 'talk'">
+          <TalkMoments />
+        </div>
+
         <!-- ========== TAB: Anime ========== -->
         <div v-show="activeTab === 'anime'">
           <AnimeTracker />
+        </div>
+
+        <!-- ========== TAB: Hot ========== -->
+        <div v-show="activeTab === 'hot'">
+          <HotDashboard />
         </div>
 
         <HomePageFooter />
