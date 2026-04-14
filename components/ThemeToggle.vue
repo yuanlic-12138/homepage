@@ -4,22 +4,25 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { Icon } from '@iconify/vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { Icon } from '@iconify/vue'
 
-const theme = ref("light");
+type ThemeMode = 'light' | 'dark'
+
+const theme = ref<ThemeMode>('light')
 
 onMounted(() => {
-  theme.value = localStorage.getItem("theme") || "light";
-  document.documentElement.setAttribute("data-theme", theme.value);
-});
+  const savedTheme = localStorage.getItem('theme')
+  theme.value = savedTheme === 'dark' ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', theme.value)
+})
 
 const changeTheme = () => {
-  theme.value = theme.value === "light" ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", theme.value);
-  localStorage.setItem("theme", theme.value);
-};
+  theme.value = theme.value === 'light' ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-theme', theme.value)
+  localStorage.setItem('theme', theme.value)
+}
 </script>
 
 <style scoped>

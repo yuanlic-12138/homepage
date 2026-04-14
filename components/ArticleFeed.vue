@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { formatDateZh } from '~/utils/format'
 
 type ArticleFeedItem = {
   id: string
@@ -99,15 +100,7 @@ const feedData = computed<ArticleFeedResponse>(() => {
 const articles = computed(() => feedData.value.items ?? [])
 
 function formatFeedDate(value: string) {
-  if (!value) {
-    return ''
-  }
-
-  return new Intl.DateTimeFormat('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date(value)).replace(/\//g, '-')
+  return formatDateZh(value)
 }
 </script>
 

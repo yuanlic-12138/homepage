@@ -33,41 +33,44 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-const now = ref(new Date());
-let timeTimer = null;
+const now = ref(new Date())
+let timeTimer: ReturnType<typeof setInterval> | undefined
 
-const hoursPassed = computed(() => now.value.getHours());
-const hoursProgress = computed(() => ((hoursPassed.value / 24) * 100).toFixed(2));
+const hoursPassed = computed(() => now.value.getHours())
+const hoursProgress = computed(() => ((hoursPassed.value / 24) * 100).toFixed(2))
 
 const daysInWeekPassed = computed(() => {
-  const day = now.value.getDay();
-  return day === 0 ? 7 : day;
-});
-const weekProgress = computed(() => ((daysInWeekPassed.value / 7) * 100).toFixed(2));
+  const day = now.value.getDay()
+  return day === 0 ? 7 : day
+})
+const weekProgress = computed(() => ((daysInWeekPassed.value / 7) * 100).toFixed(2))
 
-const daysInMonthPassed = computed(() => now.value.getDate());
-const daysInCurrentMonth = computed(() => new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0).getDate());
-const monthProgress = computed(() => (daysInMonthPassed.value / daysInCurrentMonth.value) * 100);
+const daysInMonthPassed = computed(() => now.value.getDate())
+const daysInCurrentMonth = computed(() => new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0).getDate())
+const monthProgress = computed(() => (daysInMonthPassed.value / daysInCurrentMonth.value) * 100)
 
-const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
 
 const daysInYearPassed = computed(() => {
-  const startOfYear = new Date(now.value.getFullYear(), 0, 1);
-  const diff = now.value - startOfYear;
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-});
-const daysInCurrentYear = computed(() => (isLeapYear(now.value.getFullYear()) ? 366 : 365));
-const yearProgress = computed(() => ((daysInYearPassed.value / daysInCurrentYear.value) * 100).toFixed(2));
+  const startOfYear = new Date(now.value.getFullYear(), 0, 1)
+  const diff = now.value.getTime() - startOfYear.getTime()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+})
+const daysInCurrentYear = computed(() => (isLeapYear(now.value.getFullYear()) ? 366 : 365))
+const yearProgress = computed(() => ((daysInYearPassed.value / daysInCurrentYear.value) * 100).toFixed(2))
 
 onMounted(() => {
-  // Using setInterval safely
-  timeTimer = setInterval(() => { now.value = new Date(); }, 1000);
-});
+  timeTimer = setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+})
 
 onUnmounted(() => {
-  if (timeTimer) clearInterval(timeTimer);
-});
+  if (timeTimer) {
+    clearInterval(timeTimer)
+  }
+})
 </script>

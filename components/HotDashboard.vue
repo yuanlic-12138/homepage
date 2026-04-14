@@ -61,41 +61,56 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { hotPlatforms } from '~/config/hot.config'
+import type { HotPlatform } from '~/config/hot.config'
+import { formatNumberWithSeparator, formatRelativeHours } from '~/utils/format'
 
-const platforms = [
-  { id: 'bilibili', name: '哔哩哔哩', icon: 'ri:bilibili-fill', color: '#00aeec' },
-  { id: 'weibo', name: '微博', icon: 'ri:weibo-fill', color: '#e6162d' },
-  { id: 'douyin', name: '抖音', icon: 'ri:tiktok-fill', color: '#1c1c1e' },
-  { id: 'zhihu', name: '知乎', icon: 'ri:zhihu-fill', color: '#0066ff' },
-  { id: '36kr', name: '36氪', icon: 'ph:newspaper-bold', color: '#015df3' },
-  { id: 'baidu', name: '百度', icon: 'ri:baidu-fill', color: '#2932e1' }
-]
+type HotItem = {
+  id?: string | number
+  title?: string
+  desc?: string
+  url?: string
+  mobileUrl?: string
+  author?: string
+  hot?: string | number
+}
 
-const currentPlatform = ref(platforms[0])
+type HotResponse = {
+  total?: number
+  updateTime?: string
+  data?: HotItem[]
+}
+
+const platforms = hotPlatforms
+const currentPlatform = ref<HotPlatform>(platforms[0])
 
 const reqUrl = computed(() => `https://hot-api.liiiu.cn/${currentPlatform.value.id}`)
 
-const { data: hotData, pending, error, refresh } = useFetch(reqUrl, {
+const { data: hotData, pending, error, refresh } = useFetch<HotResponse>(reqUrl, {
   query: { cache: 'true' },
   key: computed(() => `hot-${currentPlatform.value.id}`),
   server: false,
-  lazy: true
+  lazy: true,
+  default: () => ({
+    total: 0,
+    updateTime: '',
+    data: []
+  } as HotResponse)
 })
 
 const relativeUpdateText = computed(() => {
-  if (!hotData.value?.updateTime) return ''
-  const diffMs = Date.now() - new Date(hotData.value.updateTime).getTime()
-  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
-  if (diffHrs < 1) return '刚刚'
-  return `${diffHrs} 小时`
+  return formatRelativeHours(hotData.value?.updateTime)
 })
 
-const formatHot = (val) => {
-  if (!val) return ''
-  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+const formatHot = (value?: string | number) => {
+  if (!value && value !== 0) {
+    return ''
+  }
+
+  return formatNumberWithSeparator(value)
 }
 </script>
 

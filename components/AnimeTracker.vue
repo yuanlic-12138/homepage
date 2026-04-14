@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { formatCompactCount } from '~/utils/format'
 
 type AnimeCard = {
   id: number | null
@@ -90,15 +91,7 @@ const { data, pending, error, refresh } = await useFetch('/api/anime-feed', {
 const animeItems = computed(() => data.value?.items ?? [])
 
 function formatCount(value: number) {
-  if (!value) {
-    return '0'
-  }
-
-  if (value >= 10000) {
-    return `${(value / 10000).toFixed(1)}万`
-  }
-
-  return new Intl.NumberFormat('zh-CN').format(value)
+  return formatCompactCount(value)
 }
 </script>
 
@@ -119,7 +112,7 @@ function formatCount(value: number) {
 
 .anime-refresh-btn:hover {
   color: var(--gh-fg);
-  background-color: var(--gh-canvas-subtle);
+  background-color: var(--gh-bg-subtle);
 }
 
 .anime-body {
@@ -186,7 +179,7 @@ function formatCount(value: number) {
 }
 
 .repo-link {
-  color: var(--gh-accent-fg);
+  color: var(--gh-accent);
   text-decoration: none;
 }
 
@@ -258,7 +251,7 @@ function formatCount(value: number) {
   border-radius: 6px;
   border: 1px solid var(--gh-border-muted);
   overflow: hidden;
-  background: var(--gh-canvas-subtle);
+  background: var(--gh-bg-subtle);
 }
 
 .repo-cover {

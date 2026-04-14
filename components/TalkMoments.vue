@@ -87,6 +87,7 @@ import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { config } from '~/config/site.config'
 import { talkList } from '~/config/talks.config'
+import { formatDateZh } from '~/utils/format'
 
 const sortedTalks = computed(() => {
   return [...talkList].sort((left, right) => {
@@ -95,13 +96,7 @@ const sortedTalks = computed(() => {
 })
 
 function formatTalkDate(date: string) {
-  return new Intl.DateTimeFormat('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(date)).replace(/\//g, '-')
+  return formatDateZh(date, true)
 }
 </script>
 
