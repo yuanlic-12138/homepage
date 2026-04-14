@@ -3,8 +3,9 @@
     <div class="vcard-header-mobile">
       <div class="vcard-avatar-wrap">
         <img :src="config.avatarUrl" alt="Avatar" class="vcard-avatar" />
-        <div class="avatar-status-badge" title="在线">
-          <div class="status-dot"></div>
+        <div class="user-status-badge">
+          <span class="status-emoji">🎯</span>
+          <span class="status-message">Focusing</span>
         </div>
       </div>
   

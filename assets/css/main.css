@@ -44,54 +44,47 @@ body, html {
 .gh-wrapper { min-height: 100vh; }
 .gh-main {
   max-width: 1280px; margin: 0 auto; padding: 32px;
-  display: grid; grid-template-columns: 296px 1fr; gap: 32px;
+  display: grid; grid-template-columns: 260px 1fr; gap: 32px;
 }
 
 /* ====== LEFT: VCARD ====== */
 .gh-vcard { position: sticky; top: 32px; align-self: start; }
-.vcard-avatar-wrap { width: 296px; height: 296px; margin-bottom: 16px; position: relative; }
+.vcard-avatar-wrap { width: 260px; height: 260px; margin-bottom: 16px; position: relative; }
 .vcard-avatar {
   width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
   border: 1px solid var(--gh-border); transition: transform 0.3s;
 }
 .vcard-avatar:hover { transform: scale(1.03); }
 
-.avatar-status-badge {
+.user-status-badge {
   position: absolute;
-  bottom: 12%;
-  right: 5%;
-  width: 44px;
-  height: 44px;
+  bottom: 24px;
+  left: 100%;
+  margin-left: -48px;
   background-color: var(--gh-bg);
   border: 1px solid var(--gh-border);
-  border-radius: 50%;
+  border-radius: 2em;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   z-index: 2;
-  transition: all 0.3s;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
-.status-dot {
-  width: 14px;
-  height: 14px;
-  background-color: var(--gh-success);
-  border-radius: 50%;
-  animation: pulse-green 2s infinite;
+.user-status-badge:hover {
+  color: var(--gh-accent);
 }
-
-@keyframes pulse-green {
-  0% { box-shadow: 0 0 0 0 rgba(45, 164, 78, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(45, 164, 78, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(45, 164, 78, 0); }
+.status-emoji {
+  font-size: 16px;
+  line-height: 1;
 }
-[data-theme="dark"] .status-dot {
-  animation: pulse-green-dark 2s infinite;
-}
-@keyframes pulse-green-dark {
-  0% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.5); }
-  70% { box-shadow: 0 0 0 6px rgba(63, 185, 80, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0); }
+.status-message {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gh-fg-muted);
 }
 
 .vcard-names { margin-bottom: 12px; }
@@ -344,15 +337,16 @@ body, html {
   /* Vcard */
   .gh-vcard { position: static; display: flex; flex-direction: column; gap: 12px; }
   .vcard-header-mobile { display: flex; align-items: center; gap: 16px; }
-  .vcard-avatar-wrap { width: 84px; height: 84px; margin-bottom: 0; }
-  .avatar-status-badge {
-    width: 26px;
-    height: 26px;
-    bottom: -2px;
-    right: -2px;
-    border-width: 1px;
+  .vcard-avatar-wrap { width: 68px; height: 68px; margin-bottom: 0; }
+  .user-status-badge {
+    bottom: -4px;
+    left: auto;
+    right: -8px;
+    margin-left: 0;
+    padding: 6px;
+    border-radius: 50%;
   }
-  .status-dot { width: 10px; height: 10px; }
+  .status-message { display: none; }
   .vcard-names { margin-bottom: 0; }
   .vcard-fullname { font-size: 20px; line-height: 1.2; }
   .vcard-username { font-size: 16px; }
