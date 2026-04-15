@@ -39,9 +39,10 @@
         <div v-else-if="hotData?.data?.length" class="hot-list">
           <a 
             v-for="(item, index) in hotData.data" 
-            :key="item.id || index"
+            :key="item.id || item.url || item.mobileUrl || item.title || index"
             :href="item.url || item.mobileUrl"
             target="_blank"
+            rel="noopener noreferrer"
             class="hot-item-link"
           >
             <div class="rank-badge" :class="[`rank-${index + 1}`]">{{ index + 1 }}</div>

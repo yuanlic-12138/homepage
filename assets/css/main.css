@@ -3,10 +3,10 @@
   --gh-bg: #ffffff;
   --gh-bg-subtle: #f6f8fa;
   --gh-fg: #1f2328;
-  --gh-fg-muted: #656d76;
+  --gh-fg-muted: #57606a;
   --gh-border: #d0d7de;
   --gh-border-muted: #d8dee4;
-  --gh-accent: #0969da;
+  --gh-accent: #0550ae;
   --gh-btn-bg: #f6f8fa;
   --gh-badge-bg: #ddf4ff;
   --gh-success: #1a7f37;
@@ -18,10 +18,10 @@
   --gh-bg: #0d1117;
   --gh-bg-subtle: #161b22;
   --gh-fg: #e6edf3;
-  --gh-fg-muted: #848d97;
+  --gh-fg-muted: #9da7b3;
   --gh-border: #30363d;
   --gh-border-muted: #21262d;
-  --gh-accent: #2f81f7;
+  --gh-accent: #4493f8;
   --gh-btn-bg: #21262d;
   --gh-badge-bg: rgba(56,139,253,0.15);
   --gh-success: #3fb950;
@@ -38,6 +38,11 @@ body, html {
   transition: background 0.15s, color 0.15s;
 }
 * { box-sizing: border-box; }
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--gh-accent);
+  outline-offset: 2px;
+}
 .fixed-toggle { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; }
 
 /* ====== MAIN GRID ====== */

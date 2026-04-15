@@ -2,6 +2,18 @@ import { animeList } from '~/config/site.config'
 
 type LocalAnime = (typeof animeList)[number]
 
+type AnimeCard = {
+  id: number | null
+  name: string
+  cover: string
+  summary: string
+  heat: number
+  totalEpisodes: number
+  status?: string
+  url: string
+  source: 'bangumi' | 'local'
+}
+
 type BangumiSubject = {
   id: number
   name?: string
@@ -28,40 +40,61 @@ type BangumiSearchResponse = {
   data?: BangumiSubject[]
 }
 
-const BANGUMI_API = 'https://api.bgm.tv'
-const BANGUMI_HEADERS = {
-  'Content-Type': 'application/json',
-  'User-Agent': 'Cotovo/1.0 (https://cotovo.local)'
+type AnimeFeedResponse = {
+  updatedAt: string
+  source: 'bangumi'
+  items: AnimeCard[]
 }
 
+const CACHE_TTL = 60 * 60 * 1000
 const SUMMARY_FALLBACK = '暂时还没有同步到官方简介。'
 
-export default defineEventHandler(async () => {
+let cacheEntry: { expiresAt: number; data: AnimeFeedResponse } | null = null
+
+export default defineEventHandler(async (event) => {
+  setHeader(event, 'Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200')
+
+  const now = Date.now()
+  if (cacheEntry && cacheEntry.expiresAt > now) {
+    return cacheEntry.data
+  }
+
+  const runtimeConfig = useRuntimeConfig()
+  const requestOptions = {
+    apiBaseUrl: runtimeConfig.bangumiApiBase || 'https://api.bgm.tv',
+    siteUrl: runtimeConfig.public.siteUrl || 'https://cot.wiki'
+  }
+
   const items = sortAnimeCards(
-    await mapWithConcurrency(animeList, 4, fetchAnimeCard)
+    await mapWithConcurrency(animeList, 4, anime => fetchAnimeCard(anime, requestOptions))
   )
 
-  return {
+  const response: AnimeFeedResponse = {
     updatedAt: new Date().toISOString(),
     source: 'bangumi',
     items
   }
+
+  cacheEntry = {
+    data: response,
+    expiresAt: now + CACHE_TTL
+  }
+
+  return response
 })
 
-async function fetchAnimeCard(anime: LocalAnime) {
+async function fetchAnimeCard(anime: LocalAnime, requestOptions: { apiBaseUrl: string; siteUrl: string }): Promise<AnimeCard> {
   try {
-    // 优先使用精确 ID 直取，彻底消除搜索歧义
     if (anime.bangumiId) {
-      const subject = await fetchSubjectById(anime.bangumiId)
+      const subject = await fetchSubjectById(anime.bangumiId, requestOptions)
       if (subject) {
         return normalizeAnimeCard(anime, subject)
       }
     }
 
-    // 无 ID 时回退搜索
     const candidates = buildSearchKeywords(anime)
     for (const keyword of candidates) {
-      const results = await searchBangumi(keyword)
+      const results = await searchBangumi(keyword, requestOptions)
       const subject = pickBestSubject(results, keyword)
       if (subject) {
         return normalizeAnimeCard(anime, subject)
@@ -74,9 +107,9 @@ async function fetchAnimeCard(anime: LocalAnime) {
   return buildFallbackCard(anime)
 }
 
-async function fetchSubjectById(id: number) {
-  const response = await fetch(`${BANGUMI_API}/v0/subjects/${id}`, {
-    headers: BANGUMI_HEADERS
+async function fetchSubjectById(id: number, requestOptions: { apiBaseUrl: string; siteUrl: string }) {
+  const response = await fetch(`${requestOptions.apiBaseUrl}/v0/subjects/${id}`, {
+    headers: createBangumiHeaders(requestOptions.siteUrl)
   })
 
   if (!response.ok) {
@@ -86,10 +119,10 @@ async function fetchSubjectById(id: number) {
   return await response.json() as BangumiSubject
 }
 
-async function searchBangumi(keyword: string) {
-  const response = await fetch(`${BANGUMI_API}/v0/search/subjects?limit=5`, {
+async function searchBangumi(keyword: string, requestOptions: { apiBaseUrl: string; siteUrl: string }) {
+  const response = await fetch(`${requestOptions.apiBaseUrl}/v0/search/subjects?limit=5`, {
     method: 'POST',
-    headers: BANGUMI_HEADERS,
+    headers: createBangumiHeaders(requestOptions.siteUrl),
     body: JSON.stringify({
       keyword,
       sort: 'match',
@@ -103,6 +136,15 @@ async function searchBangumi(keyword: string) {
 
   const payload = await response.json() as BangumiSearchResponse
   return payload.data ?? []
+}
+
+function createBangumiHeaders(siteUrl: string) {
+  return {
+    'Content-Type': 'application/json',
+    'Origin': siteUrl,
+    'Referer': siteUrl,
+    'User-Agent': 'Cotovo/1.0 (+https://cot.wiki)'
+  }
 }
 
 function buildSearchKeywords(anime: LocalAnime) {
@@ -149,7 +191,7 @@ function scoreSubject(subject: BangumiSubject, normalizedKeyword: string) {
   return score
 }
 
-function normalizeAnimeCard(anime: LocalAnime, subject: BangumiSubject) {
+function normalizeAnimeCard(anime: LocalAnime, subject: BangumiSubject): AnimeCard {
   return {
     id: subject.id,
     name: anime.name,
@@ -163,7 +205,7 @@ function normalizeAnimeCard(anime: LocalAnime, subject: BangumiSubject) {
   }
 }
 
-function buildFallbackCard(anime: LocalAnime) {
+function buildFallbackCard(anime: LocalAnime): AnimeCard {
   return {
     id: null,
     name: anime.name,

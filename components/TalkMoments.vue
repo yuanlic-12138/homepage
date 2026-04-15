@@ -11,11 +11,11 @@
       <div v-if="sortedTalks.length" class="talk-list gh-timeline">
         <div
           v-for="(talk, index) in sortedTalks"
-          :key="`${talk.date}-${index}`"
+          :key="`${talk.date}-${talk.location || 'talk'}-${talk.text.slice(0, 24)}`"
           class="gh-timeline-item"
         >
           <div class="gh-timeline-avatar">
-            <img :src="config.avatarUrl" :alt="config.name" loading="lazy">
+            <img :src="config.avatarUrl" :alt="config.name" loading="lazy" width="40" height="40" decoding="async">
           </div>
           
           <article class="gh-comment-bubble">
@@ -31,15 +31,15 @@
 
             <div class="bubble-body">
               <div class="talk-content">
-                <div v-if="talk.text" class="text" v-html="talk.text"></div>
+                <div v-if="talk.text" class="text" v-html="renderTalkText(talk.text)"></div>
 
                 <div v-if="talk.images?.length" class="images">
                   <div
                     v-for="(image, imageIndex) in talk.images"
-                    :key="`${image}-${imageIndex}`"
+                    :key="`${talk.date}-${image}`"
                     class="image"
                   >
-                    <img :src="image" :alt="`说说配图 ${imageIndex + 1}`" loading="lazy">
+                    <img :src="image" :alt="`说说配图 ${imageIndex + 1}`" loading="lazy" width="400" height="400" decoding="async">
                   </div>
                 </div>
 
@@ -62,7 +62,7 @@
                     class="location"
                     :href="`https://bing.com/maps?q=${encodeURIComponent(talk.location)}`"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     :title="`搜索 ${talk.location}`"
                   >
                     <Icon icon="tabler:map-pin-filled" />
@@ -97,6 +97,20 @@ const sortedTalks = computed(() => {
 
 function formatTalkDate(date: string) {
   return formatDateZh(date, true)
+}
+
+const htmlEscapeMap: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  '\'': '&#39;'
+}
+
+function renderTalkText(value: string) {
+  return value
+    .replace(/[&<>"']/g, character => htmlEscapeMap[character] || character)
+    .replace(/\n/g, '<br>')
 }
 </script>
 

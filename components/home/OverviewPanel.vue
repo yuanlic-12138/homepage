@@ -20,7 +20,7 @@
       <span class="card-h-title">技术栈体系 (Tech Stack)</span>
     </div>
     <div class="card-body">
-      <h4 class="section-heading">Languages & Frameworks</h4>
+      <h3 class="section-heading">Languages & Frameworks</h3>
       <div class="gh-lang-bar">
         <span
           v-for="segment in techBarSegments"
@@ -33,11 +33,11 @@
       <ul class="gh-lang-list section-block">
         <li v-for="item in primaryTechStack" :key="item.name">
           <span class="lang-dot" :style="{ backgroundColor: getTechColor(item.name) }"></span>
-          <a href="javascript:void(0)" class="lang-name">{{ item.name }}</a>
+          <span class="lang-name">{{ item.name }}</span>
         </li>
       </ul>
 
-      <h4 class="section-heading">Topics & Ecosystem</h4>
+      <h3 class="section-heading">Topics & Ecosystem</h3>
       <div class="topic-list">
         <span
           v-for="item in ecosystemTechStack"

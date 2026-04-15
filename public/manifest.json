@@ -1,0 +1,17 @@
+{
+  "name": "序栈集",
+  "short_name": "序栈集",
+  "description": "Cotovo 的数字空间，记录技术栈、文章、说说、追番与实时热榜。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

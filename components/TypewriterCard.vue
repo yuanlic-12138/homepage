@@ -11,29 +11,36 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { typewriterTexts } from '~/config/site.config'
 
 const currentText = ref('')
-let twIndex = 0
-let charIndex = 0
-let isDeleting = false
+const twIndex = ref(0)
+const charIndex = ref(0)
+const isDeleting = ref(false)
 let typeTimer: ReturnType<typeof setTimeout> | undefined
+let startTimer: ReturnType<typeof setTimeout> | undefined
 
 const typeWriterEffect = () => {
-  const fullText = typewriterTexts[twIndex] || ''
-  if (isDeleting) {
-    currentText.value = fullText.substring(0, charIndex - 1)
-    charIndex--
-  } else {
-    currentText.value = fullText.substring(0, charIndex + 1)
-    charIndex++
+  const fullText = typewriterTexts[twIndex.value] || ''
+
+  if (!fullText) {
+    currentText.value = ''
+    return
   }
 
-  let typingSpeed = isDeleting ? 50 : 150
+  if (isDeleting.value) {
+    charIndex.value = Math.max(charIndex.value - 1, 0)
+    currentText.value = fullText.substring(0, charIndex.value)
+  } else {
+    charIndex.value += 1
+    currentText.value = fullText.substring(0, charIndex.value)
+  }
 
-  if (!isDeleting && charIndex === fullText.length) {
+  let typingSpeed = isDeleting.value ? 50 : 150
+
+  if (!isDeleting.value && charIndex.value === fullText.length) {
     typingSpeed = 2000
-    isDeleting = true
-  } else if (isDeleting && charIndex === 0) {
-    isDeleting = false
-    twIndex = (twIndex + 1) % typewriterTexts.length
+    isDeleting.value = true
+  } else if (isDeleting.value && charIndex.value === 0) {
+    isDeleting.value = false
+    twIndex.value = (twIndex.value + 1) % typewriterTexts.length
     typingSpeed = 500
   }
 
@@ -41,7 +48,11 @@ const typeWriterEffect = () => {
 }
 
 onMounted(() => {
-  setTimeout(() => {
+  if (!typewriterTexts.length) {
+    return
+  }
+
+  startTimer = setTimeout(() => {
     typeWriterEffect()
   }, 1000)
 })
@@ -49,6 +60,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (typeTimer) {
     clearTimeout(typeTimer)
+  }
+
+  if (startTimer) {
+    clearTimeout(startTimer)
   }
 })
 </script>

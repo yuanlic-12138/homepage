@@ -17,9 +17,27 @@ type ParsedRss = {
   }
 }
 
-const RSS_URL = 'https://blog.coet.ink/rss.xml'
-const RSS_HEADERS = {
-  'User-Agent': 'Cotovo/1.0 (https://cotovo.local)'
+type ArticleFeedResponse = {
+  sourceTitle: string
+  sourceLink: string
+  updatedAt: string
+  items: Array<{
+    id: string
+    title: string
+    url: string
+    summary: string
+    publishedAt: string
+  }>
+}
+
+const CACHE_TTL = 5 * 60 * 1000
+const HTML_ENTITY_MAP: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  '#39': '\''
 }
 
 const parser = new XMLParser({
@@ -30,9 +48,22 @@ const parser = new XMLParser({
   trimValues: true
 })
 
-export default defineEventHandler(async () => {
-  const response = await fetch(RSS_URL, {
-    headers: RSS_HEADERS
+let cacheEntry: { expiresAt: number; data: ArticleFeedResponse } | null = null
+
+export default defineEventHandler(async (event) => {
+  setHeader(event, 'Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600')
+
+  const now = Date.now()
+  if (cacheEntry && cacheEntry.expiresAt > now) {
+    return cacheEntry.data
+  }
+
+  const runtimeConfig = useRuntimeConfig()
+  const rssUrl = runtimeConfig.rssUrl || 'https://blog.coet.ink/rss.xml'
+  const response = await fetch(rssUrl, {
+    headers: {
+      'User-Agent': 'Cotovo/1.0 (+https://cot.wiki)'
+    }
   })
 
   if (!response.ok) {
@@ -52,23 +83,25 @@ export default defineEventHandler(async () => {
     publishedAt: item.pubDate || ''
   }))
 
-  return {
+  const result: ArticleFeedResponse = {
     sourceTitle: channel?.title || '博客文章',
-    sourceLink: channel?.link || RSS_URL,
+    sourceLink: channel?.link || rssUrl,
     updatedAt: channel?.lastBuildDate || '',
     items
   }
+
+  cacheEntry = {
+    data: result,
+    expiresAt: now + CACHE_TTL
+  }
+
+  return result
 })
 
 function sanitizeSummary(value?: string) {
   return (value || '')
     .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, '\'')
+    .replace(/&(nbsp|amp|lt|gt|quot|#39);/gi, (_, entity: string) => HTML_ENTITY_MAP[entity.toLowerCase()] || ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }

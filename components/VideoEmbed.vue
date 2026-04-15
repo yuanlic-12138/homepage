@@ -20,6 +20,7 @@
       v-else
       class="video-element"
       :src="resolvedSrc"
+      :title="embedTitle"
       loading="lazy"
       scrolling="no"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture"
@@ -76,6 +77,23 @@ const resolvedSrc = computed(() => {
       return `https://www.tiktok.com/embed/v3/${props.id}`
     default:
       return props.id
+  }
+})
+
+const embedTitle = computed(() => {
+  switch (props.type) {
+    case 'bilibili':
+    case 'bilibili-nano':
+      return 'Bilibili 视频播放器'
+    case 'youtube':
+      return 'YouTube 视频播放器'
+    case 'douyin':
+    case 'douyin-wide':
+      return '抖音视频播放器'
+    case 'tiktok':
+      return 'TikTok 视频播放器'
+    default:
+      return '视频播放器'
   }
 })
 </script>

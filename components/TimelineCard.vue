@@ -37,7 +37,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const now = ref(new Date())
-let timeTimer: ReturnType<typeof setInterval> | undefined
+let timeTimer: ReturnType<typeof setTimeout> | undefined
 
 const hoursPassed = computed(() => now.value.getHours())
 const hoursProgress = computed(() => ((hoursPassed.value / 24) * 100).toFixed(2))
@@ -63,14 +63,22 @@ const daysInCurrentYear = computed(() => (isLeapYear(now.value.getFullYear()) ? 
 const yearProgress = computed(() => ((daysInYearPassed.value / daysInCurrentYear.value) * 100).toFixed(2))
 
 onMounted(() => {
-  timeTimer = setInterval(() => {
-    now.value = new Date()
-  }, 1000)
+  scheduleTick()
 })
 
 onUnmounted(() => {
   if (timeTimer) {
-    clearInterval(timeTimer)
+    clearTimeout(timeTimer)
   }
 })
+
+function scheduleTick() {
+  const current = new Date()
+  const msUntilNextMinute = 60000 - ((current.getSeconds() * 1000) + current.getMilliseconds())
+
+  timeTimer = setTimeout(() => {
+    now.value = new Date()
+    scheduleTick()
+  }, msUntilNextMinute)
+}
 </script>

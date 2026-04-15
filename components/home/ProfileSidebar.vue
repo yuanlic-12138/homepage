@@ -2,7 +2,14 @@
   <aside class="gh-vcard">
     <div class="vcard-header-mobile">
       <div class="vcard-avatar-wrap">
-        <img :src="config.avatarUrl" alt="Avatar" class="vcard-avatar" />
+        <img
+          :src="config.avatarUrl"
+          :alt="`${config.name} 的头像照片`"
+          class="vcard-avatar"
+          width="260"
+          height="260"
+          decoding="async"
+        />
         <div class="user-status-badge" :title="config.status.message">
           <span class="status-emoji">{{ config.status.emoji }}</span>
         </div>
@@ -32,6 +39,7 @@
           :key="index"
           :href="link.url"
           target="_blank"
+          rel="noopener noreferrer me"
           class="gh-link social-link"
         >
           <Icon :icon="link.icon" class="social-icon" :style="{ color: link.color }" />

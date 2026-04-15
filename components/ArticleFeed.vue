@@ -6,7 +6,14 @@
         <span class="card-h-title">文章</span>
       </div>
 
-      <button class="article-refresh-btn" @click="refresh()" title="刷新文章">
+      <button
+        class="article-refresh-btn"
+        type="button"
+        :disabled="pending || isRefreshing"
+        aria-label="刷新文章列表"
+        title="刷新文章列表"
+        @click="refreshFeed"
+      >
         <Icon icon="ph:arrows-clockwise" />
       </button>
     </div>
@@ -63,8 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useRuntimeConfig } from '#imports'
 import { formatDateZh } from '~/utils/format'
 
 type ArticleFeedItem = {
@@ -82,9 +90,17 @@ type ArticleFeedResponse = {
   items: ArticleFeedItem[]
 }
 
-const blogHomeUrl = 'https://blog.coet.ink'
+const runtimeConfig = useRuntimeConfig()
+const blogHomeUrl = runtimeConfig.public.blogHomeUrl
+const isRefreshing = ref(false)
 
-const { data, pending, error, refresh } = await useFetch('/api/article-feed', {
+const { data, pending, error, refresh } = await useFetch<ArticleFeedResponse>('/api/article-feed', {
+  transform: payload => ({
+    sourceTitle: payload?.sourceTitle || '',
+    sourceLink: payload?.sourceLink || '',
+    updatedAt: payload?.updatedAt || '',
+    items: payload?.items ?? []
+  }),
   default: () => ({
     sourceTitle: '',
     sourceLink: '',
@@ -101,6 +117,20 @@ const articles = computed(() => feedData.value.items ?? [])
 
 function formatFeedDate(value: string) {
   return formatDateZh(value)
+}
+
+async function refreshFeed() {
+  if (pending.value || isRefreshing.value) {
+    return
+  }
+
+  isRefreshing.value = true
+
+  try {
+    await refresh()
+  } finally {
+    isRefreshing.value = false
+  }
 }
 </script>
 
@@ -132,6 +162,11 @@ function formatFeedDate(value: string) {
 .article-refresh-btn:hover {
   color: var(--gh-fg);
   background-color: var(--gh-bg-subtle);
+}
+
+.article-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .article-feed-body {

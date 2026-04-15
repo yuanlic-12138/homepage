@@ -5,7 +5,14 @@
         <Icon icon="ph:television" class="card-h-icon" />
         <span class="card-h-title">追番记录</span>
       </div>
-      <button class="anime-refresh-btn" @click="refresh()" title="刷新">
+      <button
+        class="anime-refresh-btn"
+        type="button"
+        :disabled="pending || isRefreshing"
+        aria-label="刷新追番记录"
+        title="刷新追番记录"
+        @click="refreshFeed"
+      >
         <Icon icon="ph:arrows-clockwise" />
       </button>
     </div>
@@ -53,10 +60,10 @@
           
           <div class="repo-side">
             <a v-if="anime.url" :href="anime.url" target="_blank" rel="noreferrer" class="repo-cover-link">
-              <img :src="anime.cover" :alt="anime.name" class="repo-cover" loading="lazy" />
+              <img :src="anime.cover" :alt="anime.name" class="repo-cover" loading="lazy" width="60" height="80" decoding="async" />
             </a>
             <div v-else class="repo-cover-link">
-              <img :src="anime.cover" :alt="anime.name" class="repo-cover" loading="lazy" />
+              <img :src="anime.cover" :alt="anime.name" class="repo-cover" loading="lazy" width="60" height="80" decoding="async" />
             </div>
           </div>
         </article>
@@ -66,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { formatCompactCount } from '~/utils/format'
 
@@ -82,9 +89,14 @@ type AnimeCard = {
   source: 'bangumi' | 'local'
 }
 
-const { data, pending, error, refresh } = await useFetch('/api/anime-feed', {
+const isRefreshing = ref(false)
+
+const { data, pending, error, refresh } = await useFetch<{ items: AnimeCard[] }>('/api/anime-feed', {
+  transform: payload => ({
+    items: payload?.items ?? []
+  }),
   default: () => ({
-    items: [] as AnimeCard[]
+    items: []
   })
 })
 
@@ -92,6 +104,20 @@ const animeItems = computed(() => data.value?.items ?? [])
 
 function formatCount(value: number) {
   return formatCompactCount(value)
+}
+
+async function refreshFeed() {
+  if (pending.value || isRefreshing.value) {
+    return
+  }
+
+  isRefreshing.value = true
+
+  try {
+    await refresh()
+  } finally {
+    isRefreshing.value = false
+  }
 }
 </script>
 
@@ -113,6 +139,11 @@ function formatCount(value: number) {
 .anime-refresh-btn:hover {
   color: var(--gh-fg);
   background-color: var(--gh-bg-subtle);
+}
+
+.anime-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .anime-body {
