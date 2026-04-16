@@ -1,5 +1,7 @@
 /.nuxt
 /.output
 /.next
+/.next.bak
 /node_modules
+/.deploy
 *.tsbuildinfo
