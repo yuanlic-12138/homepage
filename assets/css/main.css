@@ -12,6 +12,8 @@
   --gh-success: #1a7f37;
   --gh-progress-bg: #e1e4e8;
   --gh-progress-fill: #2da44e;
+  --theme-motion-duration: 400ms;
+  --theme-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme="dark"] {
@@ -35,16 +37,59 @@ body, html {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   font-size: 14px; line-height: 1.5;
   margin: 0; padding: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.4s var(--theme-motion-ease), color 0.4s var(--theme-motion-ease);
 }
 * { box-sizing: border-box; }
+
+html.theme-transition :where(
+  body,
+  .gh-wrapper,
+  .gh-main,
+  .gh-vcard,
+  .gh-content,
+  .gh-nav,
+  .nav-item,
+  .gh-card,
+  .card-header,
+  .badge,
+  .gh-topic,
+  .gh-issue-list,
+  .gh-issue-item,
+  .user-status-badge,
+  .vcard-avatar,
+  .progress-bar-bg,
+  .progress-bar-fill,
+  .flat-timeline .progress-bar,
+  .flat-timeline .progress-fill,
+  .gh-link,
+  .lang-name,
+  .gh-footer,
+  .footer-uptime,
+  .uptime-num,
+  .social-icon,
+  .status-emoji,
+  .card,
+  .card-body
+) {
+  transition:
+    background-color var(--theme-motion-duration) var(--theme-motion-ease),
+    border-color var(--theme-motion-duration) var(--theme-motion-ease),
+    color var(--theme-motion-duration) var(--theme-motion-ease),
+    box-shadow var(--theme-motion-duration) var(--theme-motion-ease),
+    opacity var(--theme-motion-duration) var(--theme-motion-ease);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--theme-motion-ease);
+}
+
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--gh-accent);
   outline-offset: 2px;
 }
-.fixed-toggle { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; }
-
 /* ====== MAIN GRID ====== */
 .gh-wrapper { min-height: 100vh; }
 .gh-main {
@@ -104,17 +149,53 @@ button:focus-visible {
 .gh-content { min-width: 0; display: flex; flex-direction: column; }
 
 .gh-nav {
-  display: flex; gap: 8px; border-bottom: 1px solid var(--gh-border);
+  display: flex; 
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--gh-border);
   margin-bottom: 16px;
+}
+.nav-tab-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-actions {
+  display: none;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.vcard-theme-wrap {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .nav-actions {
+    display: flex;
+  }
 }
 .nav-item {
   display: flex; align-items: center; gap: 8px; padding: 8px 16px;
   font-size: 14px; color: var(--gh-fg); cursor: pointer; text-decoration: none;
-  border-bottom: 2px solid transparent; line-height: 30px; white-space: nowrap;
+  position: relative; line-height: 30px; white-space: nowrap;
   transition: color 0.15s;
 }
-.nav-item:hover { color: var(--gh-fg); border-bottom-color: var(--gh-border-muted); }
-.nav-item.active { font-weight: 600; border-bottom-color: #fd8c73; }
+.nav-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+.nav-item:hover { color: var(--gh-fg); }
+.nav-item:hover::after { background-color: var(--gh-border-muted); }
+.nav-item.active { font-weight: 600; }
+.nav-item.active::after { background-color: #fd8c73; }
 .nav-ic { font-size: 16px; color: var(--gh-fg-muted); }
 .nav-item.active .nav-ic { color: var(--gh-fg); }
 .badge {
@@ -323,7 +404,79 @@ button:focus-visible {
 }
 
 /* ====== Footer ====== */
-.gh-footer { margin-top: auto; text-align: center; padding: 32px 0; font-size: 12px; color: var(--gh-fg-muted); }
+/* ====== Footer 极致排版优化 ====== */
+.gh-footer {
+  margin-top: 8px;
+  padding: 12px 0 24px;
+  text-align: center;
+  color: var(--gh-fg-muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  opacity: 0.8;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.footer-copyright {
+  font-weight: 600;
+  color: var(--gh-fg);
+}
+
+.footer-divider {
+  color: var(--gh-border);
+  font-weight: 200;
+  user-select: none;
+}
+
+.footer-uptime {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.uptime-num {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-weight: 600;
+  color: var(--gh-accent);
+  margin: 0 1px;
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 12px;
+}
+
+.footer-dot {
+  color: var(--gh-border);
+  user-select: none;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--gh-accent);
+  text-decoration: underline;
+}
 
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1012px) {
@@ -340,35 +493,61 @@ button:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 16px;
-    background: var(--gh-bg-subtle);
-    border: 1px solid var(--gh-border-muted);
-    border-radius: 6px;
+    padding: 16px 4px; /* 侧边缩减间距 */
+    background: transparent;
+    border: none;
+    border-radius: 0;
   }
 
-  /* 头像行 */
-  .vcard-header-mobile { display: flex; align-items: center; gap: 12px; }
-  .vcard-avatar-wrap { width: 72px; height: 72px; margin-bottom: 0; flex-shrink: 0; }
+  /* 头像行：垂直对齐优化 */
+  .vcard-header-mobile { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    width: 100%;
+  }
+  .vcard-avatar-wrap { 
+    width: 72px; height: 72px; 
+    margin-bottom: 0; flex-shrink: 0; 
+    position: relative; 
+    overflow: visible; 
+  }
   .user-status-badge {
+    position: absolute;
+    left: auto; /* 非常重要：重置桌面端的 left: 100% */
     bottom: -2px;
-    left: auto;
-    right: -4px;
-    margin-left: 0;
+    right: -2px;
     width: 22px;
     height: 22px;
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    border: 2px solid var(--gh-bg); 
+    border-radius: 50%;
   }
   .status-emoji { font-size: 10px; }
+  .vcard-names { flex: 1; min-width: 0; margin-bottom: 0; } /* 保护性填充 */
+  .vcard-fullname { font-size: 20px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vcard-username { font-size: 15px; opacity: 0.8; }
 
-  .vcard-names { margin-bottom: 0; }
-  .vcard-fullname { font-size: 20px; line-height: 1.2; }
-  .vcard-username { font-size: 15px; }
+  /* 主题切换按钮：移动端布局占位 */
+  .vcard-theme-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
 
-  /* Bio */
-  .vcard-bio { font-size: 13px; margin: 10px 0 0; line-height: 1.4; color: var(--gh-fg-muted); }
+  /* 信息内容区块：结构化垂直对齐 */
+  .vcard-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+  }
 
-  /* 详情标签 */
-  .vcard-details { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 0; }
+  /* Bio 优化 */
+  .vcard-bio { font-size: 13px; margin: 0; line-height: 1.5; color: var(--gh-fg-muted); }
+
+  /* 详情列表优化 */
+  .vcard-details { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; }
   .vcard-details li { font-size: 12px; padding: 0; }
   .d-icon { font-size: 14px; }
 
@@ -390,9 +569,59 @@ button:focus-visible {
   .card-body { padding: 12px; }
   .card-header { padding: 8px 12px; }
 
-  /* Footer */
-  .gh-footer { padding: 24px 12px; }
-  .footer-beian { display: flex; flex-direction: column; gap: 4px; }
+  /* Footer 极致压缩 */
+  .gh-footer { 
+    margin-top: 4px;
+    padding: 8px 12px 16px; 
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .footer-beian { 
+    display: flex; 
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 8px; 
+    margin-top: 4px;
+  }
+  .footer-separator { display: none; } /* 移动端靠 gap 区分，隐藏点分隔符 */
+
+  /* 移动端恢复侧边栏主题按钮 */
+  .vcard-theme-wrap {
+    display: block;
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transition :where(
+    body,
+    .gh-wrapper,
+    .gh-main,
+    .gh-vcard,
+    .gh-content,
+    .gh-nav,
+    .nav-item,
+    .gh-card,
+    .card-header,
+    .badge,
+    .gh-topic,
+    .gh-issue-list,
+    .gh-issue-item,
+    .user-status-badge,
+    .vcard-avatar,
+    .progress-bar-bg,
+    .progress-bar-fill,
+    .flat-timeline .progress-bar,
+    .flat-timeline .progress-fill,
+    .gh-link,
+    .lang-name,
+    .gh-footer
+  ),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ====== Scrollbar ====== */
