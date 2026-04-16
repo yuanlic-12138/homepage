@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react'
 
 type TimelineCardProps = {
   className?: string
+  initialNowIso: string
 }
 
-export default function TimelineCard({ className }: TimelineCardProps) {
-  const [now, setNow] = useState(() => new Date())
+export default function TimelineCard({ className, initialNowIso }: TimelineCardProps) {
+  const [now, setNow] = useState(() => new Date(initialNowIso))
 
   useEffect(() => {
     let timeTimer: ReturnType<typeof setTimeout> | undefined
+
+    setNow(new Date())
 
     const scheduleTick = () => {
       const current = new Date()

@@ -7,6 +7,15 @@ export default async function Page() {
     getArticleFeed().catch(() => defaultArticleFeed),
     getAnimeFeed().catch(() => defaultAnimeFeed)
   ])
+  const initialNowIso = new Date().toISOString()
+  const currentYear = new Date(initialNowIso).getFullYear()
 
-  return <HomePage initialArticleFeed={articleFeed} initialAnimeFeed={animeFeed} />
+  return (
+    <HomePage
+      initialArticleFeed={articleFeed}
+      initialAnimeFeed={animeFeed}
+      initialNowIso={initialNowIso}
+      currentYear={currentYear}
+    />
+  )
 }

@@ -5,7 +5,11 @@ import TypewriterCard from '@/components/TypewriterCard'
 import { getTechColor, getTechKind, primaryTechKinds, techBarSegments } from '@/config/homepage.ui'
 import { config, techStack } from '@/config/site.config'
 
-export default function HomeOverviewPanel() {
+type HomeOverviewPanelProps = {
+  initialNowIso: string
+}
+
+export default function HomeOverviewPanel({ initialNowIso }: HomeOverviewPanelProps) {
   const primaryTechStack = techStack.filter(item => primaryTechKinds.includes(getTechKind(item.name)))
   const ecosystemTechStack = techStack.filter(item => !primaryTechKinds.includes(getTechKind(item.name)))
 
@@ -74,7 +78,7 @@ export default function HomeOverviewPanel() {
           <span className="card-h-title">时光进度</span>
         </div>
         <div className="card-body">
-          <TimelineCard className="flat-timeline" />
+          <TimelineCard className="flat-timeline" initialNowIso={initialNowIso} />
         </div>
       </section>
     </>

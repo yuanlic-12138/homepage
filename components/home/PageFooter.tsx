@@ -1,7 +1,10 @@
 import { config } from '@/config/site.config'
 
-export default function HomePageFooter() {
-  const currentYear = new Date().getFullYear()
+type HomePageFooterProps = {
+  currentYear: number
+}
+
+export default function HomePageFooter({ currentYear }: HomePageFooterProps) {
 
   return (
     <footer className="gh-footer">

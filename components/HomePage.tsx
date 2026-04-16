@@ -22,9 +22,11 @@ import type { ArticleFeedResponse } from '@/lib/article-feed'
 type HomePageProps = {
   initialArticleFeed: ArticleFeedResponse
   initialAnimeFeed: AnimeFeedResponse
+  initialNowIso: string
+  currentYear: number
 }
 
-export default function HomePage({ initialArticleFeed, initialAnimeFeed }: HomePageProps) {
+export default function HomePage({ initialArticleFeed, initialAnimeFeed, initialNowIso, currentYear }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<HomeTabKey>('overview')
   const panelRefs = useRef<Partial<Record<HomeTabKey, HTMLElement | null>>>({})
   const [panelHeights, setPanelHeights] = useState<Partial<Record<HomeTabKey, number>>>({})
@@ -117,7 +119,7 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed }: HomeP
               aria-labelledby="tab-overview"
               tabIndex={activeTab === 'overview' ? 0 : -1}
             >
-              <HomeOverviewPanel />
+              <HomeOverviewPanel initialNowIso={initialNowIso} />
             </section>
 
             <section
@@ -196,7 +198,7 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed }: HomeP
             </section>
           </div>
 
-          <HomePageFooter />
+          <HomePageFooter currentYear={currentYear} />
         </div>
       </main>
     </div>
