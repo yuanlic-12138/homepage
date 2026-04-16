@@ -57,8 +57,16 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
     }, 560)
   }
 
-  function changeTheme() {
+  function changeTheme(e: React.MouseEvent) {
     const nextTheme = theme === 'light' ? 'dark' : 'light'
+
+    // 获取点击坐标
+    const x = e.clientX
+    const y = e.clientY
+    const root = document.documentElement
+    root.style.setProperty('--x', `${x}px`)
+    root.style.setProperty('--y', `${y}px`)
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     if (prefersReducedMotion) {
@@ -89,7 +97,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
       aria-label={themeToggleLabel}
       aria-pressed={theme === 'dark'}
       title={themeToggleLabel}
-      onClick={changeTheme}
+      onClick={(e) => changeTheme(e)}
     >
       <div className="theme-btn-bg" />
       <span className="theme-icon-stack" aria-hidden="true">

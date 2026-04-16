@@ -37,52 +37,42 @@ body, html {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   font-size: 14px; line-height: 1.5;
   margin: 0; padding: 0;
-  transition: background var(--theme-motion-duration) var(--theme-motion-ease), color var(--theme-motion-duration) var(--theme-motion-ease);
+  /* 备用简单过渡：仅针对基础背景 */
+  transition: background-color 0.3s ease;
 }
 * { box-sizing: border-box; }
 
-html.theme-transition :where(
-  body,
-  .gh-wrapper,
-  .gh-main,
-  .gh-vcard,
-  .gh-content,
-  .gh-nav,
-  .nav-item,
-  .gh-card,
-  .card-header,
-  .badge,
-  .gh-topic,
-  .gh-issue-list,
-  .gh-issue-item,
-  .user-status-badge,
-  .vcard-avatar,
-  .progress-bar-bg,
-  .progress-bar-fill,
-  .flat-timeline .progress-bar,
-  .flat-timeline .progress-fill,
-  .gh-link,
-  .lang-name,
-  .gh-footer,
-  .footer-uptime,
-  .uptime-num,
-  .social-icon,
-  .status-emoji,
-  .card,
-  .card-body
-) {
-  transition:
-    background-color var(--theme-motion-duration) var(--theme-motion-ease),
-    border-color var(--theme-motion-duration) var(--theme-motion-ease),
-    color var(--theme-motion-duration) var(--theme-motion-ease),
-    box-shadow var(--theme-motion-duration) var(--theme-motion-ease),
-    opacity var(--theme-motion-duration) var(--theme-motion-ease);
-}
-
+/* 极致流畅：圆形波纹扩散方案 (View Transition) */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 420ms;
-  animation-timing-function: var(--theme-motion-ease);
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 扩散动画定义 */
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0% at var(--x) var(--y));
+  }
+  to {
+    clip-path: circle(125% at var(--x) var(--y));
+  }
+}
+
+::view-transition-new(root) {
+  z-index: 999;
+  animation: theme-reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+/* 移除导致卡顿的大规模子元素过渡 */
+html.theme-transition *,
+html.theme-transition *:before,
+html.theme-transition *:after {
+  transition: none !important;
 }
 
 a:focus-visible,
