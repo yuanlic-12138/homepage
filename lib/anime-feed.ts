@@ -1,8 +1,9 @@
-import { animeList } from '~/config/site.config'
+import { animeList } from '@/config/site.config'
+import { getBangumiApiBase, publicSiteConfig } from '@/lib/site'
 
 type LocalAnime = (typeof animeList)[number]
 
-type AnimeCard = {
+export type AnimeCard = {
   id: number | null
   name: string
   cover: string
@@ -40,7 +41,7 @@ type BangumiSearchResponse = {
   data?: BangumiSubject[]
 }
 
-type AnimeFeedResponse = {
+export type AnimeFeedResponse = {
   updatedAt: string
   source: 'bangumi'
   items: AnimeCard[]
@@ -51,18 +52,21 @@ const SUMMARY_FALLBACK = '暂时还没有同步到官方简介。'
 
 let cacheEntry: { expiresAt: number; data: AnimeFeedResponse } | null = null
 
-export default defineEventHandler(async (event) => {
-  setHeader(event, 'Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200')
+export const defaultAnimeFeed: AnimeFeedResponse = {
+  updatedAt: '',
+  source: 'bangumi',
+  items: []
+}
 
+export async function getAnimeFeed(): Promise<AnimeFeedResponse> {
   const now = Date.now()
   if (cacheEntry && cacheEntry.expiresAt > now) {
     return cacheEntry.data
   }
 
-  const runtimeConfig = useRuntimeConfig()
   const requestOptions = {
-    apiBaseUrl: runtimeConfig.bangumiApiBase || 'https://api.bgm.tv',
-    siteUrl: runtimeConfig.public.siteUrl || 'https://cot.wiki'
+    apiBaseUrl: getBangumiApiBase(),
+    siteUrl: publicSiteConfig.siteUrl
   }
 
   const items = sortAnimeCards(
@@ -81,9 +85,12 @@ export default defineEventHandler(async (event) => {
   }
 
   return response
-})
+}
 
-async function fetchAnimeCard(anime: LocalAnime, requestOptions: { apiBaseUrl: string; siteUrl: string }): Promise<AnimeCard> {
+async function fetchAnimeCard(
+  anime: LocalAnime,
+  requestOptions: { apiBaseUrl: string; siteUrl: string }
+): Promise<AnimeCard> {
   try {
     if (anime.bangumiId) {
       const subject = await fetchSubjectById(anime.bangumiId, requestOptions)
@@ -107,8 +114,12 @@ async function fetchAnimeCard(anime: LocalAnime, requestOptions: { apiBaseUrl: s
   return buildFallbackCard(anime)
 }
 
-async function fetchSubjectById(id: number, requestOptions: { apiBaseUrl: string; siteUrl: string }) {
+async function fetchSubjectById(
+  id: number,
+  requestOptions: { apiBaseUrl: string; siteUrl: string }
+) {
   const response = await fetch(`${requestOptions.apiBaseUrl}/v0/subjects/${id}`, {
+    cache: 'no-store',
     headers: createBangumiHeaders(requestOptions.siteUrl)
   })
 
@@ -116,12 +127,16 @@ async function fetchSubjectById(id: number, requestOptions: { apiBaseUrl: string
     return null
   }
 
-  return await response.json() as BangumiSubject
+  return (await response.json()) as BangumiSubject
 }
 
-async function searchBangumi(keyword: string, requestOptions: { apiBaseUrl: string; siteUrl: string }) {
+async function searchBangumi(
+  keyword: string,
+  requestOptions: { apiBaseUrl: string; siteUrl: string }
+) {
   const response = await fetch(`${requestOptions.apiBaseUrl}/v0/search/subjects?limit=5`, {
     method: 'POST',
+    cache: 'no-store',
     headers: createBangumiHeaders(requestOptions.siteUrl),
     body: JSON.stringify({
       keyword,
@@ -134,16 +149,16 @@ async function searchBangumi(keyword: string, requestOptions: { apiBaseUrl: stri
     throw new Error(`Bangumi search failed: ${response.status}`)
   }
 
-  const payload = await response.json() as BangumiSearchResponse
+  const payload = (await response.json()) as BangumiSearchResponse
   return payload.data ?? []
 }
 
 function createBangumiHeaders(siteUrl: string) {
   return {
     'Content-Type': 'application/json',
-    'Origin': siteUrl,
-    'Referer': siteUrl,
-    'User-Agent': 'Cotovo/1.0 (+https://cot.wiki)'
+    Origin: siteUrl,
+    Referer: siteUrl,
+    'User-Agent': `Cotovo/1.0 (+${siteUrl})`
   }
 }
 
@@ -184,7 +199,7 @@ function scoreSubject(subject: BangumiSubject, normalizedKeyword: string) {
     score += 100
   }
 
-  if (candidates.some((item) => item.includes(normalizedKeyword) || normalizedKeyword.includes(item))) {
+  if (candidates.some(item => item.includes(normalizedKeyword) || normalizedKeyword.includes(item))) {
     score += 40
   }
 
@@ -237,9 +252,7 @@ function resolveAnimeStatus(anime: LocalAnime) {
 }
 
 function sortAnimeCards<T extends { status?: string }>(items: T[]) {
-  return [...items].sort((left, right) => {
-    return getStatusPriority(left.status) - getStatusPriority(right.status)
-  })
+  return [...items].sort((left, right) => getStatusPriority(left.status) - getStatusPriority(right.status))
 }
 
 function getStatusPriority(status?: string) {
@@ -251,10 +264,7 @@ function getHeat(collection?: BangumiSubject['collection']) {
     return 0
   }
 
-  return (
-    (collection.doing || 0) +
-    (collection.collect || 0)
-  )
+  return (collection.doing || 0) + (collection.collect || 0)
 }
 
 function normalizeText(value?: string) {
@@ -279,9 +289,7 @@ async function mapWithConcurrency<T, R>(
     }
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, () => worker())
-  )
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()))
 
   return results
 }

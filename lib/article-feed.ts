@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser'
 
+import { getRssUrl, publicSiteConfig } from '@/lib/site'
+
 type ParsedRss = {
   rss?: {
     channel?: {
@@ -17,17 +19,19 @@ type ParsedRss = {
   }
 }
 
-type ArticleFeedResponse = {
+export type ArticleFeedItem = {
+  id: string
+  title: string
+  url: string
+  summary: string
+  publishedAt: string
+}
+
+export type ArticleFeedResponse = {
   sourceTitle: string
   sourceLink: string
   updatedAt: string
-  items: Array<{
-    id: string
-    title: string
-    url: string
-    summary: string
-    publishedAt: string
-  }>
+  items: ArticleFeedItem[]
 }
 
 const CACHE_TTL = 5 * 60 * 1000
@@ -43,34 +47,36 @@ const HTML_ENTITY_MAP: Record<string, string> = {
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '$',
-  isArray: (name) => name === 'item',
+  isArray: name => name === 'item',
   parseTagValue: true,
   trimValues: true
 })
 
 let cacheEntry: { expiresAt: number; data: ArticleFeedResponse } | null = null
 
-export default defineEventHandler(async (event) => {
-  setHeader(event, 'Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600')
+export const defaultArticleFeed: ArticleFeedResponse = {
+  sourceTitle: '',
+  sourceLink: '',
+  updatedAt: '',
+  items: []
+}
 
+export async function getArticleFeed(): Promise<ArticleFeedResponse> {
   const now = Date.now()
   if (cacheEntry && cacheEntry.expiresAt > now) {
     return cacheEntry.data
   }
 
-  const runtimeConfig = useRuntimeConfig()
-  const rssUrl = runtimeConfig.rssUrl || 'https://blog.coet.ink/rss.xml'
+  const rssUrl = getRssUrl()
   const response = await fetch(rssUrl, {
+    cache: 'no-store',
     headers: {
-      'User-Agent': 'Cotovo/1.0 (+https://cot.wiki)'
+      'User-Agent': `Cotovo/1.0 (+${publicSiteConfig.siteUrl})`
     }
   })
 
   if (!response.ok) {
-    throw createError({
-      statusCode: response.status,
-      statusMessage: `RSS feed request failed: ${response.status}`
-    })
+    throw new Error(`RSS feed request failed: ${response.status}`)
   }
 
   const payload = parser.parse(await response.text()) as ParsedRss
@@ -96,7 +102,7 @@ export default defineEventHandler(async (event) => {
   }
 
   return result
-})
+}
 
 function sanitizeSummary(value?: string) {
   return (value || '')
