@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import AnimeTracker from '@/components/AnimeTracker'
 import ArticleFeed from '@/components/ArticleFeed'
 import HotDashboard from '@/components/HotDashboard'
 import TalkMoments from '@/components/TalkMoments'
-import ThemeToggle from '@/components/ThemeToggle'
 import HomeFocusPanel from '@/components/home/FocusPanel'
 import HomeOverviewPanel from '@/components/home/OverviewPanel'
 import HomePageFooter from '@/components/home/PageFooter'
@@ -28,89 +27,22 @@ type HomePageProps = {
 
 export default function HomePage({ initialArticleFeed, initialAnimeFeed, initialNowIso, currentYear }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<HomeTabKey>('overview')
-  const panelRefs = useRef<Partial<Record<HomeTabKey, HTMLElement | null>>>({})
-  const [panelHeights, setPanelHeights] = useState<Partial<Record<HomeTabKey, number>>>({})
   const tabs = createHomeTabs({
     talkCount: talkList.length,
     animeCount: animeList.length,
     focusCount: todoList.length
   })
-  const stablePanelMinHeight = useMemo(() => {
-    const heights = Object.values(panelHeights)
-
-    if (!heights.length) {
-      return undefined
-    }
-
-    return `${Math.max(...heights)}px`
-  }, [panelHeights])
-
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') {
-      return
-    }
-
-    const resizeObserver = new ResizeObserver(entries => {
-      setPanelHeights(previous => {
-        let changed = false
-        const next = { ...previous }
-
-        for (const entry of entries) {
-          const panelKey = entry.target.getAttribute('data-panel-key') as HomeTabKey | null
-          if (!panelKey) {
-            continue
-          }
-
-          const nextHeight = Math.ceil(entry.contentRect.height)
-          if (next[panelKey] !== nextHeight) {
-            next[panelKey] = nextHeight
-            changed = true
-          }
-        }
-
-        return changed ? next : previous
-      })
-    })
-
-    const initialHeights: Partial<Record<HomeTabKey, number>> = {}
-
-    for (const panel of Object.values(panelRefs.current)) {
-      if (!panel) {
-        continue
-      }
-
-      const panelKey = panel.dataset.panelKey as HomeTabKey | undefined
-      if (panelKey) {
-        initialHeights[panelKey] = Math.ceil(panel.getBoundingClientRect().height)
-      }
-
-      resizeObserver.observe(panel)
-    }
-
-    if (Object.keys(initialHeights).length) {
-      setPanelHeights(previous => ({ ...previous, ...initialHeights }))
-    }
-
-    return () => {
-      resizeObserver.disconnect()
-    }
-  }, [])
 
   return (
     <div className="gh-wrapper">
-      <ThemeToggle className="fixed-toggle" />
-
       <main className="gh-main">
         <HomeProfileSidebar />
 
         <div className="gh-content">
           <HomeTabsNav tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-          <div className="gh-tab-panels" style={{ minHeight: stablePanelMinHeight }}>
+          <div className="gh-tab-panels">
             <section
-              ref={element => {
-                panelRefs.current.overview = element
-              }}
               className={`gh-tab-panel ${activeTab === 'overview' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="overview"
               id="panel-overview"
@@ -123,9 +55,6 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed, initial
             </section>
 
             <section
-              ref={element => {
-                panelRefs.current.article = element
-              }}
               className={`gh-tab-panel ${activeTab === 'article' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="article"
               id="panel-article"
@@ -138,9 +67,6 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed, initial
             </section>
 
             <section
-              ref={element => {
-                panelRefs.current.focus = element
-              }}
               className={`gh-tab-panel ${activeTab === 'focus' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="focus"
               id="panel-focus"
@@ -153,9 +79,6 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed, initial
             </section>
 
             <section
-              ref={element => {
-                panelRefs.current.talk = element
-              }}
               className={`gh-tab-panel ${activeTab === 'talk' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="talk"
               id="panel-talk"
@@ -168,9 +91,6 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed, initial
             </section>
 
             <section
-              ref={element => {
-                panelRefs.current.anime = element
-              }}
               className={`gh-tab-panel ${activeTab === 'anime' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="anime"
               id="panel-anime"
@@ -183,9 +103,6 @@ export default function HomePage({ initialArticleFeed, initialAnimeFeed, initial
             </section>
 
             <section
-              ref={element => {
-                panelRefs.current.hot = element
-              }}
               className={`gh-tab-panel ${activeTab === 'hot' ? 'is-active' : 'is-inactive'}`}
               data-panel-key="hot"
               id="panel-hot"
