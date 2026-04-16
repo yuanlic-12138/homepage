@@ -5,7 +5,7 @@ export const defaultOgImage = '/og-image.jpg'
 
 export const publicSiteConfig = {
   author: 'Perimsx',
-  blogHomeUrl: process.env.NEXT_PUBLIC_BLOG_HOME_URL || process.env.NUXT_PUBLIC_BLOG_HOME_URL || 'https://blog.coet.ink',
+  blogHomeUrl: process.env.NEXT_PUBLIC_BLOG_HOME_URL || process.env.NUXT_PUBLIC_BLOG_HOME_URL || 'https://blog.cot.wiki',
   defaultOgImage,
   siteDescription,
   siteKeywords,
@@ -20,5 +20,5 @@ export function getBangumiApiBase() {
 }
 
 export function getRssUrl() {
-  return process.env.RSS_URL || process.env.NUXT_RSS_URL || 'https://blog.coet.ink/rss.xml'
+  return process.env.RSS_URL || process.env.NUXT_RSS_URL || 'https://blog.cot.wiki/rss.xml'
 }
