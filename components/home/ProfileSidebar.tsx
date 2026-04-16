@@ -1,10 +1,11 @@
 import { Icon } from '@iconify/react'
-
+import ThemeToggle from '@/components/ThemeToggle'
 import { config, linkBtns } from '@/config/site.config'
 
 export default function HomeProfileSidebar() {
   return (
     <aside className="gh-vcard">
+      {/* 头部核心信息区 */}
       <div className="vcard-header-mobile">
         <div className="vcard-avatar-wrap">
           <img
@@ -24,25 +25,33 @@ export default function HomeProfileSidebar() {
           <h1 className="vcard-fullname">{config.name}</h1>
           <h2 className="vcard-username">cot.wiki</h2>
         </div>
+
+        <div className="vcard-theme-wrap">
+          <ThemeToggle />
+        </div>
       </div>
 
-      <p className="vcard-bio">项目联系Cotovo@163.com</p>
+      {/* 个人简介排版 */}
+      <div className="vcard-info-content">
+        <p className="vcard-bio">项目联系Cotovo@163.com</p>
 
-      <ul className="vcard-details">
-        <li>
-          <Icon icon="ph:map-pin" className="d-icon" /> {config.infoTags.province}
-        </li>
-        <li>
-          <Icon icon="ph:graduation-cap" className="d-icon" /> {config.infoTags.school}
-        </li>
-        <li>
-          <Icon icon="ph:star" className="d-icon" /> {config.zodiac}
-        </li>
-        <li>
-          <Icon icon="ph:calendar-blank" className="d-icon" /> {config.age}后
-        </li>
-      </ul>
+        <ul className="vcard-details">
+          <li>
+            <Icon icon="ph:map-pin" className="d-icon" /> {config.infoTags.province}
+          </li>
+          <li>
+            <Icon icon="ph:graduation-cap" className="d-icon" /> {config.infoTags.school}
+          </li>
+          <li>
+            <Icon icon="ph:star" className="d-icon" /> {config.zodiac}
+          </li>
+          <li>
+            <Icon icon="ph:calendar-blank" className="d-icon" /> {config.age}后
+          </li>
+        </ul>
+      </div>
 
+      {/* 社交链接布局 */}
       <div className="vcard-socials-wrapper">
         <div className="profile-divider" />
         <h3 className="social-title">社交链接</h3>
