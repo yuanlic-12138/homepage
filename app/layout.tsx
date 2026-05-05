@@ -73,8 +73,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preload" as="image" href={publicSiteConfig.defaultOgImage} />
         <link rel="preconnect" href="https://api.bgm.tv" crossOrigin="" />
         <link rel="dns-prefetch" href="//api.bgm.tv" />
-        <link rel="preconnect" href="https://blog.cot.wiki" />
-        <link rel="dns-prefetch" href="//blog.cot.wiki" />
         <link rel="preconnect" href="https://hot-api.liiiu.cn" />
         <link rel="dns-prefetch" href="//hot-api.liiiu.cn" />
       </head>

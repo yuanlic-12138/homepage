@@ -23,7 +23,7 @@ export default function HomeProfileSidebar() {
 
         <div className="vcard-names">
           <h1 className="vcard-fullname">{config.name}</h1>
-          <h2 className="vcard-username">cot.wiki</h2>
+          <h2 className="vcard-username">@runic</h2>
         </div>
 
         <div className="vcard-theme-wrap">
@@ -33,7 +33,7 @@ export default function HomeProfileSidebar() {
 
       {/* 个人简介排版 */}
       <div className="vcard-info-content">
-        <p className="vcard-bio">项目联系Cotovo@163.com</p>
+        <p className="vcard-bio"></p>
 
         <ul className="vcard-details">
           <li>

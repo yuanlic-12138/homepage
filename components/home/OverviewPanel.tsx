@@ -30,7 +30,6 @@ export default function HomeOverviewPanel({ initialNowIso }: HomeOverviewPanelPr
           <p>
             欢迎来到 <b>{config.name}</b> 的数字空间。
           </p>
-          <p>{config.professions.join('、')}。正在探索代码与 AI 的交汇点。</p>
         </div>
       </section>
 
